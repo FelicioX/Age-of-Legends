@@ -26,6 +26,7 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint -- --fix",
     "typecheck": "turbo run typecheck",
+    "smoke:playable": "node playable/smoke-test.cjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "clean": "turbo run clean && rimraf node_modules/.cache .turbo",
