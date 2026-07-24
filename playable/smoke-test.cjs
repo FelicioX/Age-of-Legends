@@ -89,7 +89,7 @@ global.setTimeout = () => 0;
 global.confirm = () => false;
 global.alert = () => {};
 
-['data.js', 'audio.js', 'render.js', 'battle.js', 'game.js'].forEach((m) =>
+['data.js', 'art.js', 'audio.js', 'render.js', 'battle.js', 'game.js'].forEach((m) =>
   new Function(fs.readFileSync(path.join(ROOT, m), 'utf8')).call(global.window),
 );
 const AOL = global.window.AOL;
@@ -204,6 +204,11 @@ ok(
   'events rotate over time',
   AOL.activeEvent(new Date(2026, 0, 1).getTime()).id !==
     AOL.activeEvent(new Date(2026, 0, 3).getTime()).id,
+);
+
+ok(
+  'art: procedural portrait module present',
+  !!AOL.Art && typeof AOL.Art.heroPortraitURL === 'function' && !!AOL.Art.rimColor('epic'),
 );
 
 console.log('\nAll ' + passed + ' smoke assertions passed.');

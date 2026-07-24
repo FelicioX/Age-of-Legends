@@ -778,7 +778,12 @@
     var fac = AOL.FACTIONS[AOL.heroFaction(h)];
     var html = '<div class="hero-card ' + (inParty ? 'in-party' : '') + '">';
     html += '<div class="hero-top" data-detail="' + h.id + '">';
-    html += '<div class="hero-portrait bg-' + r.key + '">';
+    html +=
+      '<div class="hero-portrait bg-' +
+      r.key +
+      '" style="border-color:' +
+      AOL.Art.rimColor(r.key) +
+      '">';
     html += '<span class="cls-badge">' + cls.emoji + '</span>';
     if (fac)
       html +=
@@ -789,7 +794,7 @@
         '">' +
         fac.emoji +
         '</span>';
-    html += '<span class="emblem">' + heroEmblem(h) + '</span>';
+    html += portraitInner(h, 200);
     html += '<span class="lvl-badge">Lv ' + h.level + '</span></div>';
     html += '<div class="hero-name">' + h.name + '</div>';
     html += '<div class="hero-stars rarity-' + r.key + '">' + AOL.stars(h.rarity) + '</div>';
@@ -831,6 +836,22 @@
   function heroEmblem(h) {
     // A stable, original emblem per hero from its class.
     return AOL.CLASSES[h.cls].emoji;
+  }
+  // Procedural portrait data URL (falls back to the class emoji if unavailable).
+  function heroArt(h, size) {
+    return AOL.Art ? AOL.Art.heroPortraitURL(h, size) : null;
+  }
+  // Inner markup for a portrait surface: the rendered art, or the emoji emblem.
+  function portraitInner(h, size, emojiSize) {
+    var url = heroArt(h, size);
+    if (url) return '<span class="portrait-art" style="background-image:url(' + url + ')"></span>';
+    return (
+      '<span class="emblem"' +
+      (emojiSize ? ' style="font-size:' + emojiSize + '"' : '') +
+      '>' +
+      heroEmblem(h) +
+      '</span>'
+    );
   }
 
   function levelUp(id) {
@@ -1006,9 +1027,7 @@
           ' rarity-glow-' +
           rr.key +
           '">' +
-          '<span class="emblem">' +
-          heroEmblem(h) +
-          '</span>' +
+          portraitInner(h, 120) +
           '<div class="sc-name">' +
           h.name +
           '</div>' +
@@ -1069,10 +1088,11 @@
       '<div class="modal-head">' +
       '<div class="hero-portrait bg-' +
       r.key +
-      '" style="width:64px;height:64px;flex:0 0 64px">' +
-      '<span class="emblem" style="font-size:1.9rem">' +
-      heroEmblem(h) +
-      '</span></div>' +
+      '" style="width:78px;height:90px;flex:0 0 78px;border-color:' +
+      AOL.Art.rimColor(r.key) +
+      '">' +
+      portraitInner(h, 120, '1.9rem') +
+      '</div>' +
       '<div><h3>' +
       h.name +
       '</h3>' +
@@ -1419,9 +1439,7 @@
       ' · ' +
       AOL.FORMATION[line].name +
       '">' +
-      '<span class="emblem">' +
-      heroEmblem(h) +
-      '</span>' +
+      portraitInner(h, 90) +
       (fac
         ? '<span class="form-fac" style="color:' + fac.color + '">' + fac.emoji + '</span>'
         : '') +

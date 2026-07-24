@@ -283,16 +283,47 @@ body {
 }
 .hero-portrait {
   width: 100%;
-  aspect-ratio: 1/1;
-  border-radius: 10px;
+  aspect-ratio: 1 / 1.12;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 4px 14px rgba(0, 0, 0, 0.35);
+}
+/* Rendered procedural portrait fills the frame. */
+.hero-portrait .portrait-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
 }
 .hero-portrait .emblem {
   font-size: 2.6rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+/* Shared: portrait art fills form/summon/party tiles too. */
+.form-slot,
+.summon-card {
+  overflow: hidden;
+}
+.form-slot .portrait-art,
+.summon-card .portrait-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+.summon-card .portrait-art {
+  height: 64px;
+  position: static;
+  border-radius: 8px;
+  margin-bottom: 2px;
 }
 .hero-portrait .lvl-badge {
   position: absolute;
