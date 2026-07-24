@@ -6,8 +6,13 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+    <!-- Always fetch the freshest build (avoids the browser serving stale JS/CSS). -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Age of Legends</title>
-    <link rel="stylesheet" href="styles.css" />
+    <!-- Bump ?v= whenever the prototype changes so browsers reload the assets. -->
+    <link rel="stylesheet" href="styles.css?v=13" />
   </head>
   <body>
     <div id="app">
@@ -160,10 +165,10 @@
       <div id="toasts"></div>
     </div>
 
-    <script src="data.js"></script>
-    <script src="audio.js"></script>
-    <script src="render.js"></script>
-    <script src="battle.js"></script>
-    <script src="game.js"></script>
+    <script src="data.js?v=13"></script>
+    <script src="audio.js?v=13"></script>
+    <script src="render.js?v=13"></script>
+    <script src="battle.js?v=13"></script>
+    <script src="game.js?v=13"></script>
   </body>
 </html>
