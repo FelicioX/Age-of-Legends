@@ -41,6 +41,7 @@
       jobs: [],
       campaignStage: 1,
       idle: { lastCollect: Date.now() },
+      ftue: { step: 0, done: false, firstWinDone: false },
       clock: 0,
       day: 1,
       lastTs: Date.now(),
@@ -250,6 +251,7 @@
       'heroGrid',
       'campaignBody',
       'buildQueue',
+      'ftue',
       'toasts',
       'modal',
       'modalCard',
@@ -1123,6 +1125,11 @@
           grantHeroXp(reward.heroXp);
           state.campaignStage++;
           toast('Victory! Stage ' + (state.campaignStage - 1) + ' cleared.', 'good');
+          if (state.ftue && !state.ftue.firstWinDone) {
+            state.ftue.firstWinDone = true;
+            state.gems += 50;
+            toast('First victory! Bonus 💎50 — the realm believes in you.', 'gold');
+          }
         }
         refreshHud();
         renderCampaign();
@@ -1176,10 +1183,80 @@
     }, 2200);
   }
 
+  // -------------------------------------------------------------- FTUE ---
+  function startFtue() {
+    state.ftue.step = 0;
+    state.ftue.done = false;
+    renderFtue();
+  }
+  function renderFtue() {
+    if (!el.ftue) return;
+    if (state.ftue.done) {
+      el.ftue.classList.add('hidden');
+      el.ftue.innerHTML = '';
+      return;
+    }
+    var idx = Math.min(state.ftue.step, AOL.FTUE_STEPS.length - 1);
+    var s = AOL.FTUE_STEPS[idx];
+    var dots = AOL.FTUE_STEPS.map(function (_s, i) {
+      return '<span class="ftue-dot ' + (i === idx ? 'on' : '') + '"></span>';
+    }).join('');
+    el.ftue.classList.remove('hidden');
+    el.ftue.innerHTML =
+      '<div class="ftue-card">' +
+      '<div class="ftue-crest">⚔️</div>' +
+      '<h2>' +
+      s.title +
+      '</h2>' +
+      '<p>' +
+      s.body +
+      '</p>' +
+      '<div class="ftue-dots">' +
+      dots +
+      '</div>' +
+      '<div class="ftue-actions">' +
+      '<button class="btn gold" id="ftueNext">' +
+      s.action +
+      ' →</button>' +
+      '<button class="btn ghost" id="ftueSkip">Skip intro</button>' +
+      '</div></div>';
+    document.getElementById('ftueNext').onclick = function () {
+      ftueAdvance(s);
+    };
+    document.getElementById('ftueSkip').onclick = finishFtue;
+  }
+  function ftueAdvance(s) {
+    AOL.Audio.sfx('click');
+    if (s.grant) grantFreeHero();
+    if (s.goto) switchView(s.goto);
+    state.ftue.step++;
+    if (state.ftue.step >= AOL.FTUE_STEPS.length) {
+      finishFtue();
+    } else {
+      renderFtue();
+    }
+  }
+  function grantFreeHero() {
+    var h = hero(AOL.FTUE_FREE_HERO);
+    if (h && !h.owned) {
+      h.owned = true;
+      if (state.party.length < 5) state.party.push(h.id);
+      toast('Recruited ' + h.name + '!', 'gold');
+      AOL.Audio.sfx('ultimate');
+      refreshHud();
+    }
+  }
+  function finishFtue() {
+    state.ftue.done = true;
+    renderFtue();
+    save();
+  }
+
   // Bring an older save up to the current schema (adds fields introduced later).
   function migrate() {
     if (!state.formation) state.formation = {};
     if (!state.idle) state.idle = { lastCollect: Date.now() };
+    if (!state.ftue) state.ftue = { step: 0, done: true, firstWinDone: true };
     if (!state.jobs) {
       state.jobs = [];
       // Convert any in-flight legacy upgrade into an active job.
@@ -1243,7 +1320,9 @@
         rng = new AOL.Rng(state.seed);
         el.menu.classList.add('hidden');
         refreshHud();
+        renderQueue();
         switchView('kingdom');
+        startFtue();
       }
     };
     el.modal.addEventListener('click', function (e) {
@@ -1252,6 +1331,7 @@
 
     refreshHud();
     renderQueue();
+    if (!state.ftue.done) startFtue();
 
     // Autosave.
     setInterval(save, 20000);

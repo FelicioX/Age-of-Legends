@@ -645,6 +645,35 @@ window.AOL = window.AOL || {};
     return { gold: Math.floor(r.gold * t), heroXp: Math.floor(r.heroXp * t), seconds: t };
   };
 
+  // --- First-time user experience (scripted onboarding) -------------------
+  // A short, skippable intro. One step grants a free rare hero; the flow ends
+  // by pointing the player at their first battle.
+  AOL.FTUE_FREE_HERO = 'h_morde'; // Mordecai Emberveil — a Rare mystic
+  AOL.FTUE_STEPS = [
+    {
+      title: 'Age of Legends',
+      body: 'The old realm lies in ruin. From the ashes of Ironvale, a new banner rises — yours. Rebuild the keep, gather legends, and drive back the dark.',
+      action: 'Begin',
+    },
+    {
+      title: 'Your Kingdom',
+      body: 'This is Ironvale Keep. Every building works while you are away, gathering gold, food and materials. Tap a building to raise it — stronger buildings unlock everything else.',
+      action: 'I understand',
+    },
+    {
+      title: 'A Legend Answers',
+      body: 'Word of your banner spreads. A Rare hero, Mordecai Emberveil, pledges his flame to your cause — free of charge. Welcome him to your party.',
+      action: 'Recruit Mordecai',
+      grant: true,
+    },
+    {
+      title: 'To Battle',
+      body: 'Your first foes gather on the Broken Road. Open the Campaign, check your formation, and lead your party to its first victory. Fortune favors the bold!',
+      action: "Let's go",
+      goto: 'campaign',
+    },
+  ];
+
   AOL.fmt = function (n) {
     n = Math.floor(n);
     if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
