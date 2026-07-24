@@ -8,15 +8,31 @@
 (function (AOL) {
   'use strict';
 
-  var SAVE_KEY = 'aol-game-save-v2';
+  var LEGACY_KEY = 'aol-game-save-v2';
+  var ACTIVE_KEY = 'aol-active-slot';
+  var SLOT_COUNT = 3;
   var STEP = 1 / 20;
   var state, rng;
+
+  function slotKey(i) {
+    return 'aol-save-v3-slot' + i;
+  }
+  function activeSlot() {
+    var v = parseInt(localStorage.getItem(ACTIVE_KEY), 10);
+    return isNaN(v) || v < 0 || v >= SLOT_COUNT ? 0 : v;
+  }
+  function setActiveSlot(i) {
+    try {
+      localStorage.setItem(ACTIVE_KEY, String(i));
+    } catch (e) {}
+  }
 
   // ---------------------------------------------------------------- state ---
   function defaultState(seedStr) {
     var seed = AOL.hashSeed(seedStr);
     var s = {
-      version: 2,
+      version: 3,
+      slot: activeSlot(),
       seedStr: seedStr,
       seed: seed,
       resources: { gold: 250, food: 200, wood: 300, stone: 220, iron: 120 },
@@ -75,24 +91,72 @@
     return s;
   }
 
-  function save() {
+  function save(silent) {
     state.lastTs = Date.now();
+    if (state.slot == null) state.slot = activeSlot();
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-      toast('Progress saved.', '');
+      localStorage.setItem(slotKey(state.slot), JSON.stringify(state));
+      if (!silent) toast('Progress saved.', '');
     } catch (e) {
-      toast('Save failed.', 'bad');
+      if (!silent) toast('Save failed.', 'bad');
     }
   }
-  function load() {
+  // Parse a raw save string into a valid state, or null. Accepts v2 and v3.
+  function parseSave(raw) {
+    if (!raw) return null;
     try {
-      var raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return null;
       var s = JSON.parse(raw);
-      return s && s.version === 2 ? s : null;
+      if (!s || (s.version !== 2 && s.version !== 3)) return null;
+      if (!s.buildings || !s.buildings.castle || !Array.isArray(s.heroes)) return null;
+      return s;
     } catch (e) {
       return null;
     }
+  }
+  function loadSlot(i) {
+    return parseSave(localStorage.getItem(slotKey(i)));
+  }
+  // Summary for the slot manager, or null when the slot is empty.
+  function slotSummary(i) {
+    var s = loadSlot(i);
+    if (!s) return null;
+    return {
+      kingdom: s.buildings && s.buildings.castle ? s.buildings.castle.level : 1,
+      stage: s.campaignStage || 1,
+      day: s.day || 1,
+      heroes: (s.heroes || []).filter(function (h) {
+        return h.owned;
+      }).length,
+      ts: s.lastTs || 0,
+    };
+  }
+  // On boot, pick the active slot; migrate a legacy single-key save into slot 0.
+  function loadActive() {
+    var legacy = parseSave(localStorage.getItem(LEGACY_KEY));
+    if (legacy && !loadSlot(0)) {
+      legacy.slot = 0;
+      try {
+        localStorage.setItem(slotKey(0), JSON.stringify(legacy));
+        localStorage.removeItem(LEGACY_KEY);
+      } catch (e) {}
+    }
+    var i = activeSlot();
+    var s = loadSlot(i);
+    if (!s) {
+      // Fall back to any populated slot.
+      for (var k = 0; k < SLOT_COUNT; k++) {
+        if (loadSlot(k)) {
+          i = k;
+          s = loadSlot(k);
+          break;
+        }
+      }
+    }
+    if (s) {
+      s.slot = i;
+      setActiveSlot(i);
+    }
+    return s;
   }
 
   function hero(id) {
@@ -1931,6 +1995,8 @@
       if (h.stars == null) h.stars = AOL.baseStars(h.rarity);
       if (!h.gear) h.gear = {};
     });
+    if (state.slot == null) state.slot = activeSlot();
+    state.version = 3;
     if (!state.jobs) {
       state.jobs = [];
       // Convert any in-flight legacy upgrade into an active job.
@@ -1949,10 +2015,170 @@
     }
   }
 
+  // ------------------------------------------------------ save slots / IO ---
+  function applyLoadedState() {
+    rng = new AOL.Rng(state.seed);
+    el.menu.classList.add('hidden');
+    closeModal();
+    ensureDaily();
+    refreshHud();
+    renderQueue();
+    switchView('kingdom');
+    if (!state.ftue.done) startFtue();
+  }
+  function startNewGame(slot) {
+    setActiveSlot(slot);
+    state = defaultState('age-of-legends-' + Date.now());
+    state.slot = slot;
+    save(true);
+    applyLoadedState();
+    startFtue();
+    toast('New game started in slot ' + (slot + 1) + '.', 'good');
+  }
+  function switchToSlot(slot) {
+    if (slot === state.slot) {
+      el.menu.classList.add('hidden');
+      closeModal();
+      return;
+    }
+    save(true); // preserve the current slot first
+    var s = loadSlot(slot);
+    setActiveSlot(slot);
+    if (!s) {
+      startNewGame(slot);
+      return;
+    }
+    state = s;
+    state.slot = slot;
+    migrate();
+    applyOffline();
+    applyLoadedState();
+    toast('Loaded slot ' + (slot + 1) + '.', 'good');
+  }
+  function deleteSlot(slot) {
+    if (slot === state.slot) {
+      toast('Cannot delete the active slot.', 'bad');
+      return;
+    }
+    if (!confirm('Delete slot ' + (slot + 1) + '? This cannot be undone.')) return;
+    try {
+      localStorage.removeItem(slotKey(slot));
+    } catch (e) {}
+    toast('Slot ' + (slot + 1) + ' deleted.', '');
+    openSlotManager();
+  }
+  function exportSave() {
+    save(true);
+    var data = localStorage.getItem(slotKey(state.slot)) || JSON.stringify(state);
+    var ta = document.getElementById('ioText');
+    if (ta) {
+      ta.value = data;
+      ta.focus();
+      try {
+        ta.select();
+      } catch (e) {}
+    }
+    toast('Save exported below — copy the text.', 'good');
+  }
+  function importSave() {
+    var ta = document.getElementById('ioText');
+    if (!ta || !ta.value.trim()) {
+      toast('Paste a save string first.', 'bad');
+      return;
+    }
+    var s = parseSave(ta.value.trim());
+    if (!s) {
+      toast('Invalid save data.', 'bad');
+      return;
+    }
+    if (!confirm('Import into slot ' + (state.slot + 1) + '? Current slot will be overwritten.'))
+      return;
+    s.slot = state.slot;
+    state = s;
+    migrate();
+    save(true);
+    applyLoadedState();
+    toast('Save imported.', 'good');
+  }
+  function openSlotManager() {
+    openBuilding = null;
+    openHero = null;
+    var rows = '';
+    for (var i = 0; i < SLOT_COUNT; i++) {
+      var sum = slotSummary(i);
+      var isActive = i === state.slot;
+      var meta = sum
+        ? '🏰 Lv' +
+          sum.kingdom +
+          ' · ⚔️ Stage ' +
+          sum.stage +
+          ' · 🛡️ ' +
+          sum.heroes +
+          ' heroes · Day ' +
+          sum.day
+        : 'Empty slot';
+      rows +=
+        '<div class="slot-row' +
+        (isActive ? ' active' : '') +
+        '">' +
+        '<div class="slot-info"><div class="slot-title">Slot ' +
+        (i + 1) +
+        (isActive ? ' · <span class="slot-badge">active</span>' : '') +
+        '</div><div class="slot-meta muted">' +
+        meta +
+        '</div></div>' +
+        '<div class="slot-actions">' +
+        (isActive
+          ? '<button class="btn ghost" data-slotnew="' + i + '">New</button>'
+          : '<button class="btn gold" data-slotload="' +
+            i +
+            '">' +
+            (sum ? 'Load' : 'Start') +
+            '</button>' +
+            (sum ? '<button class="btn danger" data-slotdel="' + i + '">✕</button>' : '')) +
+        '</div></div>';
+    }
+    var html =
+      '<div class="modal-head"><div class="b-emoji">💾</div><div><h3>Save Slots</h3>' +
+      '<div class="lvl">Local saves · autosaved every 20s</div></div></div>' +
+      '<div class="slot-list">' +
+      rows +
+      '</div>' +
+      '<div class="view-sub" style="margin:0.6rem 0 0.3rem">Backup (export / import)</div>' +
+      '<textarea id="ioText" class="io-text" placeholder="Export puts your save here; paste a save string to import."></textarea>' +
+      '<div class="modal-actions">' +
+      '<button class="btn" id="ioExport">Export</button>' +
+      '<button class="btn" id="ioImport">Import</button>' +
+      '</div>' +
+      '<div class="modal-actions"><button class="btn ghost" id="closeModal">Close</button></div>';
+    el.modalCard.innerHTML = html;
+    el.menu.classList.add('hidden');
+    el.modal.classList.remove('hidden');
+    el.modalCard.querySelectorAll('[data-slotload]').forEach(function (b) {
+      b.onclick = function () {
+        switchToSlot(parseInt(b.getAttribute('data-slotload'), 10));
+      };
+    });
+    el.modalCard.querySelectorAll('[data-slotnew]').forEach(function (b) {
+      b.onclick = function () {
+        if (confirm('Start a new game in this slot? Current progress will be replaced.'))
+          startNewGame(parseInt(b.getAttribute('data-slotnew'), 10));
+      };
+    });
+    el.modalCard.querySelectorAll('[data-slotdel]').forEach(function (b) {
+      b.onclick = function () {
+        deleteSlot(parseInt(b.getAttribute('data-slotdel'), 10));
+      };
+    });
+    document.getElementById('ioExport').onclick = exportSave;
+    document.getElementById('ioImport').onclick = importSave;
+    document.getElementById('closeModal').onclick = closeModal;
+  }
+
   // ------------------------------------------------------------------ boot ---
   function boot() {
     cacheEl();
-    var saved = load();
+    var saved = loadActive();
     if (saved) {
       state = saved;
       migrate();
@@ -1988,15 +2214,11 @@
       save();
       el.menu.classList.add('hidden');
     };
+    var slotsBtn = document.getElementById('slotsBtn');
+    if (slotsBtn) slotsBtn.onclick = openSlotManager;
     document.getElementById('newGameBtn').onclick = function () {
-      if (confirm('Start a new game? Current progress will be replaced.')) {
-        state = defaultState('age-of-legends-' + Date.now());
-        rng = new AOL.Rng(state.seed);
-        el.menu.classList.add('hidden');
-        refreshHud();
-        renderQueue();
-        switchView('kingdom');
-        startFtue();
+      if (confirm('Start a new game in this slot? Current slot progress will be replaced.')) {
+        startNewGame(activeSlot());
       }
     };
     el.modal.addEventListener('click', function (e) {
@@ -2008,8 +2230,10 @@
     renderQueue();
     if (!state.ftue.done) startFtue();
 
-    // Autosave.
-    setInterval(save, 20000);
+    // Autosave (silent).
+    setInterval(function () {
+      save(true);
+    }, 20000);
 
     // Main loop.
     var last = performance.now(),
