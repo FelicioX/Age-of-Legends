@@ -203,6 +203,7 @@
 
   // -------------------------------------------------------- building modal ---
   var openBuilding = null;
+  var openHero = null;
   function openModal(type) {
     openBuilding = type;
     renderModal(type);
@@ -210,6 +211,7 @@
   }
   function closeModal() {
     openBuilding = null;
+    openHero = null;
     el.modal.classList.add('hidden');
   }
 
@@ -348,13 +350,20 @@
     var locked = state.heroes.filter(function (h) {
       return !h.owned;
     });
-    var html = owned.map(heroCard).join('');
+    var html =
+      '<div class="syn-bar" style="grid-column:1/-1">' + synergyPills(currentSynergy()) + '</div>';
+    html += owned.map(heroCard).join('');
     if (locked.length) {
       html +=
         '<div style="grid-column:1/-1;color:var(--muted);font-size:0.8rem;margin-top:0.5rem">Not yet recruited</div>';
       html += locked.map(heroCard).join('');
     }
     el.heroGrid.innerHTML = html;
+    el.heroGrid.querySelectorAll('[data-detail]').forEach(function (node) {
+      node.onclick = function () {
+        openHeroModal(node.getAttribute('data-detail'));
+      };
+    });
     el.heroGrid.querySelectorAll('[data-lvlup]').forEach(function (btn) {
       btn.onclick = function () {
         levelUp(btn.getAttribute('data-lvlup'));
@@ -377,14 +386,26 @@
     var r = AOL.RARITY[h.rarity];
     var inParty = state.party.indexOf(h.id) >= 0;
     var cls = AOL.CLASSES[h.cls];
+    var fac = AOL.FACTIONS[AOL.heroFaction(h)];
     var html = '<div class="hero-card ' + (inParty ? 'in-party' : '') + '">';
+    html += '<div class="hero-top" data-detail="' + h.id + '">';
     html += '<div class="hero-portrait bg-' + r.key + '">';
     html += '<span class="cls-badge">' + cls.emoji + '</span>';
+    if (fac)
+      html +=
+        '<span class="fac-badge" title="' +
+        fac.name +
+        '" style="color:' +
+        fac.color +
+        '">' +
+        fac.emoji +
+        '</span>';
     html += '<span class="emblem">' + heroEmblem(h) + '</span>';
     html += '<span class="lvl-badge">Lv ' + h.level + '</span></div>';
     html += '<div class="hero-name">' + h.name + '</div>';
     html += '<div class="hero-stars rarity-' + r.key + '">' + AOL.stars(h.rarity) + '</div>';
     html += '<div class="hero-power">⚔️ Power <b>' + AOL.fmt(st.power) + '</b></div>';
+    html += '</div>';
     if (h.owned) {
       var cost = AOL.heroLevelCost(h);
       var can = affordable(cost);
@@ -463,13 +484,201 @@
     renderHeroes();
   }
 
+  // ----------------------------------------------------------- hero detail ---
+  function openHeroModal(id) {
+    openBuilding = null;
+    openHero = id;
+    renderHeroModal(id);
+    el.modal.classList.remove('hidden');
+  }
+  function renderHeroModal(id) {
+    var h = hero(id);
+    if (!h) return;
+    var st = AOL.heroStats(h);
+    var r = AOL.RARITY[h.rarity];
+    var cls = AOL.CLASSES[h.cls];
+    var fac = AOL.FACTIONS[AOL.heroFaction(h)];
+    var skills = AOL.heroSkills(h) || {};
+    var inParty = state.party.indexOf(h.id) >= 0;
+
+    var html =
+      '<div class="modal-head">' +
+      '<div class="hero-portrait bg-' +
+      r.key +
+      '" style="width:64px;height:64px;flex:0 0 64px">' +
+      '<span class="emblem" style="font-size:1.9rem">' +
+      heroEmblem(h) +
+      '</span></div>' +
+      '<div><h3>' +
+      h.name +
+      '</h3>' +
+      '<div class="hero-stars rarity-' +
+      r.key +
+      '">' +
+      AOL.stars(h.rarity) +
+      ' <span class="muted">' +
+      r.label +
+      ' · ' +
+      cls.name +
+      '</span></div>' +
+      (fac
+        ? '<div class="fac-line" style="color:' +
+          fac.color +
+          '">' +
+          fac.emoji +
+          ' ' +
+          fac.name +
+          ' <span class="muted">· team +' +
+          Math.round(AOL.SYN_TIERS[AOL.SYN_TIERS.length - 1].mult * 100) +
+          '%→ ' +
+          fac.statLabel +
+          '</span></div>'
+        : '') +
+      '</div></div>';
+
+    html += '<div class="hero-stat-grid">';
+    html += heroStatCell('❤️ HP', AOL.fmt(st.hp));
+    html += heroStatCell('⚔️ ATK', AOL.fmt(st.atk));
+    html += heroStatCell('👟 Speed', st.spd);
+    html += heroStatCell('⭐ Power', AOL.fmt(st.power));
+    html += '</div>';
+
+    html += '<div class="skill-list">';
+    html += skillRow('🗡️', 'Basic', skills.basic);
+    html += skillRow('✨', 'Passive', skills.passive);
+    html += skillRow('💥', 'Ultimate', skills.ult);
+    html += '</div>';
+
+    if (h.owned) {
+      var cost = AOL.heroLevelCost(h);
+      var can = affordable(cost);
+      html +=
+        '<div class="modal-actions">' +
+        '<button class="btn ' +
+        (can ? 'gold' : '') +
+        '" id="hmLvlup" ' +
+        (can ? '' : 'disabled') +
+        '>Level Up 🪙' +
+        AOL.fmt(cost.gold) +
+        ' 🌾' +
+        AOL.fmt(cost.food) +
+        '</button>' +
+        '<button class="btn ' +
+        (inParty ? 'green' : 'ghost') +
+        '" id="hmParty">' +
+        (inParty ? '✓ In party' : '+ Add to party') +
+        '</button>' +
+        '</div>';
+      html +=
+        '<div class="modal-actions"><button class="btn ghost" id="closeModal">Close</button></div>';
+    } else {
+      var canRec = state.gems >= 150;
+      html +=
+        '<div class="modal-actions">' +
+        '<button class="btn ' +
+        (canRec ? 'gold' : '') +
+        '" id="hmRecruit" ' +
+        (canRec ? '' : 'disabled') +
+        '>Recruit 💎150</button>' +
+        '<button class="btn ghost" id="closeModal">Close</button></div>';
+    }
+    el.modalCard.innerHTML = html;
+
+    var lv = document.getElementById('hmLvlup');
+    if (lv)
+      lv.onclick = function () {
+        levelUp(id);
+        renderHeroModal(id);
+      };
+    var pty = document.getElementById('hmParty');
+    if (pty)
+      pty.onclick = function () {
+        toggleParty(id);
+        renderHeroModal(id);
+      };
+    var rec = document.getElementById('hmRecruit');
+    if (rec)
+      rec.onclick = function () {
+        recruit(id);
+        renderHeroModal(id);
+      };
+    document.getElementById('closeModal').onclick = closeModal;
+  }
+  function heroStatCell(label, val) {
+    return '<div class="hero-stat"><span>' + label + '</span><b>' + val + '</b></div>';
+  }
+  function skillRow(icon, kind, skill) {
+    if (!skill) return '';
+    var mod = '';
+    if (skill.mod) {
+      var parts = [];
+      if (skill.mod.hp) parts.push('+' + Math.round(skill.mod.hp * 100) + '% HP');
+      if (skill.mod.atk) parts.push('+' + Math.round(skill.mod.atk * 100) + '% ATK');
+      if (skill.mod.spd) parts.push('+' + Math.round(skill.mod.spd * 100) + '% Speed');
+      if (parts.length) mod = '<span class="skill-mod">' + parts.join(' · ') + '</span>';
+    }
+    return (
+      '<div class="skill-row">' +
+      '<div class="skill-ico">' +
+      icon +
+      '</div>' +
+      '<div class="skill-body"><div class="skill-name">' +
+      skill.name +
+      ' <span class="skill-kind">' +
+      kind +
+      '</span>' +
+      mod +
+      '</div>' +
+      '<div class="skill-desc">' +
+      skill.desc +
+      '</div></div></div>'
+    );
+  }
+
   // --------------------------------------------------------- campaign view ---
+  function currentSynergy() {
+    return AOL.factionSynergy(
+      state.party.map(function (id) {
+        return hero(id);
+      }),
+    );
+  }
   function partyPower() {
+    var syn = currentSynergy();
     var p = state.party.reduce(function (sum, id) {
-      return sum + AOL.heroStats(hero(id)).power;
+      var h = hero(id);
+      return sum + AOL.applySynergy(h, syn, AOL.heroStats(h)).power;
     }, 0);
     p += (state.buildings.barracks.level - 1) * AOL.BUILDINGS.barracks.armyPower * 5;
     return p;
+  }
+  function synergyPills(syn) {
+    var keys = Object.keys(syn);
+    if (!keys.length) {
+      return '<span class="syn-none">Group heroes of the same faction to unlock synergy bonuses.</span>';
+    }
+    return keys
+      .map(function (f) {
+        var s = syn[f];
+        return (
+          '<span class="syn-pill" style="border-color:' +
+          s.color +
+          ';color:' +
+          s.color +
+          '">' +
+          s.emoji +
+          ' ' +
+          s.name +
+          ' ×' +
+          s.count +
+          ' · +' +
+          Math.round(s.mult * 100) +
+          '% ' +
+          s.statLabel +
+          '</span>'
+        );
+      })
+      .join('');
   }
 
   function renderCampaign() {
@@ -517,6 +726,7 @@
       }
     }
     html += '</div>';
+    html += '<div class="syn-bar">' + synergyPills(currentSynergy()) + '</div>';
 
     var canFight = state.party.length > 0 && state.stamina >= 6;
     html +=
@@ -544,9 +754,10 @@
     refreshHud();
 
     var brng = new AOL.Rng(state.seed + state.campaignStage * 131 + Date.now());
+    var syn = currentSynergy();
     var allies = state.party.map(function (id) {
       var h = hero(id);
-      var st = AOL.heroStats(h);
+      var st = AOL.applySynergy(h, syn, AOL.heroStats(h));
       var bonus = 1 + (state.buildings.barracks.level - 1) * 0.05;
       return {
         name: h.name,

@@ -179,32 +179,314 @@ window.AOL = window.AOL || {};
     artificer: { name: 'Artificer', emoji: '⚙️', role: 'support', hp: 210, atk: 30, spd: 11 },
   };
 
-  // Original hero roster. `owned` marks the starting heroes.
-  AOL.HERO_POOL = [
-    { id: 'h_bram', name: 'Bram Ironhide', cls: 'vanguard', rarity: 'rare', owned: true },
-    { id: 'h_sylva', name: 'Sylva Thornwood', cls: 'ranger', rarity: 'rare', owned: true },
-    { id: 'h_kael', name: 'Kaelen Frost', cls: 'mystic', rarity: 'epic', owned: true },
-    { id: 'h_lumen', name: 'Lumen Daybringer', cls: 'warden', rarity: 'epic', owned: true },
-    { id: 'h_cog', name: 'Cog Brasswright', cls: 'artificer', rarity: 'common', owned: true },
-    { id: 'h_doran', name: 'Doran Blackshield', cls: 'vanguard', rarity: 'common', owned: false },
-    { id: 'h_aria', name: 'Aria Windsong', cls: 'ranger', rarity: 'legendary', owned: false },
-    { id: 'h_morde', name: 'Mordecai Emberveil', cls: 'mystic', rarity: 'rare', owned: false },
-    { id: 'h_nyx', name: 'Nyx Duskbane', cls: 'ranger', rarity: 'epic', owned: false },
-    { id: 'h_thane', name: 'Thane Stonefist', cls: 'vanguard', rarity: 'legendary', owned: false },
-    { id: 'h_wren', name: 'Wren Mossheart', cls: 'warden', rarity: 'common', owned: false },
-    { id: 'h_vex', name: 'Vex Sparkcoil', cls: 'artificer', rarity: 'rare', owned: false },
+  // --- Factions ------------------------------------------------------------
+  // Original factions. Fielding several heroes of one faction grants a
+  // scaling synergy bonus to a single stat (see AOL.factionSynergy).
+  AOL.FACTIONS = {
+    dawnward: {
+      key: 'dawnward',
+      name: 'Dawnward Pact',
+      emoji: '🌅',
+      color: '#ffce54',
+      stat: 'atk',
+      statLabel: 'ATK',
+      desc: 'Knights sworn to the rising sun — they strike harder side by side.',
+    },
+    wildkin: {
+      key: 'wildkin',
+      name: 'Wildkin Circle',
+      emoji: '🍃',
+      color: '#5fd06a',
+      stat: 'hp',
+      statLabel: 'HP',
+      desc: 'Wardens of the deep wood — the Circle endures where others fall.',
+    },
+    duskbound: {
+      key: 'duskbound',
+      name: 'Duskbound Covenant',
+      emoji: '🌙',
+      color: '#c07bff',
+      stat: 'spd',
+      statLabel: 'Speed',
+      desc: 'Shadow-walkers who strike from the dark — the Covenant moves first.',
+    },
+  };
+  // Synergy tiers: number of same-faction heroes -> stat bonus.
+  AOL.SYN_TIERS = [
+    { min: 4, mult: 0.2 },
+    { min: 3, mult: 0.14 },
+    { min: 2, mult: 0.08 },
   ];
 
-  // Derived hero stats at a given level.
+  // Original hero roster. Each hero has a faction and a skill trio
+  // (basic, passive, ultimate). `owned` marks the starting heroes. The
+  // passive `mod` is a fractional stat bonus folded into AOL.heroStats.
+  AOL.HERO_POOL = [
+    {
+      id: 'h_bram',
+      name: 'Bram Ironhide',
+      cls: 'vanguard',
+      rarity: 'rare',
+      faction: 'dawnward',
+      owned: true,
+      skills: {
+        basic: { name: 'Shield Bash', desc: 'Slams the front foe with the shield edge.' },
+        passive: { name: 'Ironhide', desc: '+15% max HP.', mod: { hp: 0.15 } },
+        ult: { name: 'Bulwark Slam', desc: 'A crushing blow that leaves Bram guarded for a time.' },
+      },
+    },
+    {
+      id: 'h_sylva',
+      name: 'Sylva Thornwood',
+      cls: 'ranger',
+      rarity: 'rare',
+      faction: 'dawnward',
+      owned: true,
+      skills: {
+        basic: { name: 'Quick Shot', desc: 'A fast arrow at the weakest enemy.' },
+        passive: { name: 'Keen Eye', desc: '+12% ATK.', mod: { atk: 0.12 } },
+        ult: { name: 'Arrow Volley', desc: 'Looses a storm of arrows across the enemy line.' },
+      },
+    },
+    {
+      id: 'h_kael',
+      name: 'Kaelen Frost',
+      cls: 'mystic',
+      rarity: 'epic',
+      faction: 'duskbound',
+      owned: true,
+      skills: {
+        basic: { name: 'Frost Spark', desc: 'A splinter of ice that chips nearby foes.' },
+        passive: { name: 'Frostbite', desc: '+12% ATK.', mod: { atk: 0.12 } },
+        ult: { name: 'Glacial Meteor', desc: 'Calls down a frozen star on the whole enemy team.' },
+      },
+    },
+    {
+      id: 'h_lumen',
+      name: 'Lumen Daybringer',
+      cls: 'warden',
+      rarity: 'epic',
+      faction: 'dawnward',
+      owned: true,
+      skills: {
+        basic: { name: 'Mending Light', desc: 'Heals the most wounded ally.' },
+        passive: { name: 'Dawnlight', desc: '+10% ATK (stronger heals).', mod: { atk: 0.1 } },
+        ult: { name: 'Radiant Blessing', desc: 'Bathes the whole party in restoring light.' },
+      },
+    },
+    {
+      id: 'h_cog',
+      name: 'Cog Brasswright',
+      cls: 'artificer',
+      rarity: 'common',
+      faction: 'duskbound',
+      owned: true,
+      skills: {
+        basic: { name: 'Bolt Thrower', desc: 'Fires a charged bolt at a foe.' },
+        passive: { name: 'Overclock', desc: '+12% Speed.', mod: { spd: 0.12 } },
+        ult: { name: 'Rally Engine', desc: 'Buffs allies’ attack and peppers the enemy line.' },
+      },
+    },
+    {
+      id: 'h_doran',
+      name: 'Doran Blackshield',
+      cls: 'vanguard',
+      rarity: 'common',
+      faction: 'wildkin',
+      owned: false,
+      skills: {
+        basic: { name: 'Guard Strike', desc: 'A measured blow that holds the line.' },
+        passive: { name: 'Stalwart', desc: '+12% max HP.', mod: { hp: 0.12 } },
+        ult: { name: 'Shield Wall', desc: 'A heavy slam that shields Doran afterward.' },
+      },
+    },
+    {
+      id: 'h_aria',
+      name: 'Aria Windsong',
+      cls: 'ranger',
+      rarity: 'legendary',
+      faction: 'duskbound',
+      owned: false,
+      skills: {
+        basic: { name: 'Gale Arrow', desc: 'A wind-borne arrow that never misses its mark.' },
+        passive: { name: 'Windsong', desc: '+16% ATK.', mod: { atk: 0.16 } },
+        ult: { name: 'Tempest Volley', desc: 'A cyclone of arrows sweeps the enemy team.' },
+      },
+    },
+    {
+      id: 'h_morde',
+      name: 'Mordecai Emberveil',
+      cls: 'mystic',
+      rarity: 'rare',
+      faction: 'wildkin',
+      owned: false,
+      skills: {
+        basic: { name: 'Ember Spark', desc: 'A gout of flame that licks nearby foes.' },
+        passive: { name: 'Emberveil', desc: '+14% ATK.', mod: { atk: 0.14 } },
+        ult: { name: 'Cinder Meteor', desc: 'A burning star crashes over the enemy team.' },
+      },
+    },
+    {
+      id: 'h_nyx',
+      name: 'Nyx Duskbane',
+      cls: 'ranger',
+      rarity: 'epic',
+      faction: 'wildkin',
+      owned: false,
+      skills: {
+        basic: { name: 'Twin Fang', desc: 'Two quick shots at the weakest foe.' },
+        passive: { name: 'Predator', desc: '+14% ATK.', mod: { atk: 0.14 } },
+        ult: { name: 'Hunter’s Volley', desc: 'A relentless barrage across the line.' },
+      },
+    },
+    {
+      id: 'h_thane',
+      name: 'Thane Stonefist',
+      cls: 'vanguard',
+      rarity: 'legendary',
+      faction: 'dawnward',
+      owned: false,
+      skills: {
+        basic: { name: 'Stone Fist', desc: 'A boulder-heavy punch at the front foe.' },
+        passive: { name: 'Mountain Heart', desc: '+20% max HP.', mod: { hp: 0.2 } },
+        ult: {
+          name: 'Seismic Slam',
+          desc: 'A ground-splitting blow; Thane braces behind his guard.',
+        },
+      },
+    },
+    {
+      id: 'h_wren',
+      name: 'Wren Mossheart',
+      cls: 'warden',
+      rarity: 'common',
+      faction: 'wildkin',
+      owned: false,
+      skills: {
+        basic: { name: 'Herbal Salve', desc: 'Mends the most wounded ally.' },
+        passive: { name: 'Verdant Renewal', desc: '+10% max HP.', mod: { hp: 0.1 } },
+        ult: { name: 'Grove’s Embrace', desc: 'Living roots heal the whole party.' },
+      },
+    },
+    {
+      id: 'h_vex',
+      name: 'Vex Sparkcoil',
+      cls: 'artificer',
+      rarity: 'rare',
+      faction: 'duskbound',
+      owned: false,
+      skills: {
+        basic: { name: 'Arc Bolt', desc: 'A crackling bolt at a foe.' },
+        passive: { name: 'Sparkcoil', desc: '+10% Speed.', mod: { spd: 0.1 } },
+        ult: { name: 'Overcharge', desc: 'Empowers allies’ attacks and zaps the enemy line.' },
+      },
+    },
+  ];
+
+  // Fast lookup of the static hero definition (faction/skills) by id.
+  AOL.HERO_BY_ID = {};
+  AOL.HERO_POOL.forEach(function (h) {
+    AOL.HERO_BY_ID[h.id] = h;
+  });
+  AOL.heroDef = function (hero) {
+    return AOL.HERO_BY_ID[hero && hero.id ? hero.id : hero];
+  };
+  AOL.heroFaction = function (hero) {
+    var d = AOL.heroDef(hero);
+    return d ? d.faction : null;
+  };
+  AOL.heroSkills = function (hero) {
+    var d = AOL.heroDef(hero);
+    return d ? d.skills : null;
+  };
+  AOL.heroPassive = function (hero) {
+    var d = AOL.heroDef(hero);
+    return d && d.skills ? d.skills.passive : null;
+  };
+
+  AOL.powerFrom = function (hp, atk, spd) {
+    return Math.round(hp * 0.25 + atk * 3.2 + spd * 2);
+  };
+
+  // Derived hero stats at a given level (passive stat bonus already folded in).
   AOL.heroStats = function (hero) {
     var cls = AOL.CLASSES[hero.cls];
     var r = AOL.RARITY[hero.rarity];
     var lvlScale = 1 + 0.14 * (hero.level - 1);
-    var hp = Math.round(cls.hp * r.mult * lvlScale);
-    var atk = Math.round(cls.atk * r.mult * lvlScale);
+    var hp = cls.hp * r.mult * lvlScale;
+    var atk = cls.atk * r.mult * lvlScale;
     var spd = cls.spd;
-    var power = Math.round(hp * 0.25 + atk * 3.2 + spd * 2);
-    return { hp: hp, atk: atk, spd: spd, power: power, role: cls.role, emoji: cls.emoji };
+    var pas = AOL.heroPassive(hero);
+    if (pas && pas.mod) {
+      hp *= 1 + (pas.mod.hp || 0);
+      atk *= 1 + (pas.mod.atk || 0);
+      spd *= 1 + (pas.mod.spd || 0);
+    }
+    hp = Math.round(hp);
+    atk = Math.round(atk);
+    spd = Math.round(spd);
+    return {
+      hp: hp,
+      atk: atk,
+      spd: spd,
+      power: AOL.powerFrom(hp, atk, spd),
+      role: cls.role,
+      emoji: cls.emoji,
+    };
+  };
+
+  // Active faction synergies for a party (array of hero objects/ids).
+  AOL.factionSynergy = function (heroObjs) {
+    var counts = {};
+    (heroObjs || []).forEach(function (h) {
+      if (!h) return;
+      var f = AOL.heroFaction(h);
+      if (f) counts[f] = (counts[f] || 0) + 1;
+    });
+    var out = {};
+    Object.keys(counts).forEach(function (f) {
+      var c = counts[f];
+      var tier = null;
+      for (var i = 0; i < AOL.SYN_TIERS.length; i++) {
+        if (c >= AOL.SYN_TIERS[i].min) {
+          tier = AOL.SYN_TIERS[i];
+          break;
+        }
+      }
+      if (tier) {
+        var fac = AOL.FACTIONS[f];
+        out[f] = {
+          count: c,
+          mult: tier.mult,
+          stat: fac.stat,
+          statLabel: fac.statLabel,
+          name: fac.name,
+          emoji: fac.emoji,
+          color: fac.color,
+        };
+      }
+    });
+    return out;
+  };
+
+  // Apply a hero's active faction synergy on top of its base stats.
+  AOL.applySynergy = function (hero, syn, stats) {
+    var s = syn && syn[AOL.heroFaction(hero)];
+    if (!s) return stats;
+    var hp = stats.hp,
+      atk = stats.atk,
+      spd = stats.spd;
+    if (s.stat === 'atk') atk = Math.round(atk * (1 + s.mult));
+    else if (s.stat === 'hp') hp = Math.round(hp * (1 + s.mult));
+    else if (s.stat === 'spd') spd = spd * (1 + s.mult);
+    return {
+      hp: hp,
+      atk: atk,
+      spd: spd,
+      power: AOL.powerFrom(hp, atk, spd),
+      role: stats.role,
+      emoji: stats.emoji,
+    };
   };
 
   AOL.heroLevelCost = function (hero) {
