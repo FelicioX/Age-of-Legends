@@ -41,6 +41,9 @@ temp/
 tmp/
 *.tmp
 
+# Working memory (local session notes, not versioned)
+WORKING_MEMORY.md
+
 # Database local data
 database/backups/*
 !database/backups/.gitkeep

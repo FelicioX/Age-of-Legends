@@ -2,51 +2,106 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Age of Legends — Prototype</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Age of Legends</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header id="topbar">
-      <div class="brand">
-        <span class="crest">⚔️</span>
-        <span class="title">Age of Legends</span>
-        <span class="tag">Prototype</span>
-      </div>
-      <div id="resources" class="resources">
-        <div class="res" title="Wood"><span class="ico">🪵</span><span data-res="wood">0</span></div>
-        <div class="res" title="Stone"><span class="ico">🪨</span><span data-res="stone">0</span></div>
-        <div class="res" title="Iron"><span class="ico">⛏️</span><span data-res="iron">0</span></div>
-        <div class="res" title="Food"><span class="ico">🌾</span><span data-res="food">0</span></div>
-        <div class="res gold" title="Gold"><span class="ico">🪙</span><span data-res="gold">0</span></div>
-      </div>
-      <div class="clock"><span id="phase">☀️</span> <span id="day">Day 1</span></div>
-    </header>
-
-    <main id="stage">
-      <section id="kingdom" class="panel">
-        <h2>Kingdom</h2>
-        <p class="hint">Upgrade buildings to raise production. The Town Hall gates every other tier.</p>
-        <div id="buildings"></div>
-      </section>
-
-      <section id="worldwrap">
-        <canvas id="world" width="640" height="480" aria-label="World map"></canvas>
-        <div class="world-hint">Click the map to send your party. Reach nodes to gather, camps to fight.</div>
-      </section>
-
-      <section id="party" class="panel">
-        <h2>Party</h2>
-        <div id="hero"></div>
-        <h3>Chronicle</h3>
-        <ul id="log" class="log"></ul>
-        <div class="controls">
-          <button id="save">Save</button>
-          <button id="newgame">New Game</button>
+    <div id="app">
+      <!-- Top resource bar -->
+      <header id="hud">
+        <div class="hud-left">
+          <div class="crest">⚔️</div>
+          <div class="titles">
+            <div class="game-title">Age of Legends</div>
+            <div class="kingdom-name" id="kingdomName">
+              Ironvale Keep · Lv <span id="kingdomLevel">1</span>
+            </div>
+          </div>
         </div>
-      </section>
-    </main>
+        <div class="hud-res" id="resBar"></div>
+        <div class="hud-right">
+          <div class="chip stamina" title="Stamina">
+            <span class="ico">⚡</span><span id="staminaText">0</span>
+          </div>
+          <div class="chip gems" title="Gems">
+            <span class="ico">💎</span><span id="gemsText">0</span>
+          </div>
+        </div>
+      </header>
 
+      <!-- Main views -->
+      <main id="stage">
+        <section id="view-kingdom" class="view active">
+          <canvas id="kingdom"></canvas>
+          <div class="view-tip">
+            Tap a building to upgrade it. Your kingdom produces even while you are away.
+          </div>
+        </section>
+
+        <section id="view-heroes" class="view">
+          <div class="view-head">
+            <h2>Heroes</h2>
+            <div class="sub">Recruit, level and form your battle party (up to 5).</div>
+          </div>
+          <div id="heroGrid" class="hero-grid"></div>
+        </section>
+
+        <section id="view-campaign" class="view">
+          <div class="view-head">
+            <h2>Campaign</h2>
+            <div class="sub">Send your party into battle. Victory unlocks the next stage.</div>
+          </div>
+          <div id="campaignBody"></div>
+        </section>
+      </main>
+
+      <!-- Bottom navigation -->
+      <nav id="nav">
+        <button class="nav-btn active" data-view="kingdom">
+          <span class="n-ico">🏰</span><span>Kingdom</span>
+        </button>
+        <button class="nav-btn" data-view="heroes">
+          <span class="n-ico">🛡️</span><span>Heroes</span>
+        </button>
+        <button class="nav-btn" data-view="campaign">
+          <span class="n-ico">⚔️</span><span>Campaign</span>
+        </button>
+        <button class="nav-btn ghost" id="menuBtn">
+          <span class="n-ico">⚙️</span><span>Menu</span>
+        </button>
+      </nav>
+
+      <!-- Building upgrade modal -->
+      <div id="modal" class="modal hidden">
+        <div class="modal-card" id="modalCard"></div>
+      </div>
+
+      <!-- Battle overlay -->
+      <div id="battle" class="battle hidden"></div>
+
+      <!-- Menu overlay -->
+      <div id="menu" class="modal hidden">
+        <div class="modal-card menu-card">
+          <h3>Menu</h3>
+          <p class="muted">Age of Legends — playable prototype</p>
+          <div class="menu-actions">
+            <button id="saveBtn" class="btn">Save</button>
+            <button id="newGameBtn" class="btn danger">New Game</button>
+            <button id="closeMenu" class="btn ghost">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toasts -->
+      <div id="toasts"></div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="render.js"></script>
     <script src="game.js"></script>
   </body>
 </html>
