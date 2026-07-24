@@ -871,6 +871,161 @@ body {
   padding: 0 0.4rem;
 }
 
+/* ---------- Daily (login & missions) ---------- */
+.daily-body {
+  padding: 0 1rem 1rem;
+}
+.view-sub {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--gold);
+  margin: 0.9rem 0 0.5rem;
+}
+.login-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.login-cell {
+  position: relative;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  padding: 6px 3px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  min-height: 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.login-cell.next {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold) inset;
+  animation: pulseGold 1.6s ease-in-out infinite;
+}
+.login-cell.claimed {
+  opacity: 0.5;
+}
+@keyframes pulseGold {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--gold) inset;
+  }
+  50% {
+    box-shadow: 0 0 10px 1px rgba(240, 196, 25, 0.5) inset;
+  }
+}
+.login-day {
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+.login-ico {
+  font-size: 1.3rem;
+}
+.login-amt {
+  font-size: 0.58rem;
+  color: var(--muted);
+  line-height: 1.1;
+}
+.login-check {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  color: #5fd06a;
+  font-weight: 800;
+  font-size: 0.7rem;
+}
+.activity {
+  margin-bottom: 0.4rem;
+}
+.ap-bar {
+  position: relative;
+  height: 12px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 1.1rem 0 0.3rem;
+}
+.ap-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #ffcf5c, #ff9a3c);
+  transition: width 0.3s;
+}
+.ap-chest {
+  position: absolute;
+  top: -8px;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid var(--edge-2);
+  background: #10182b;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.ap-chest.ready {
+  border-color: var(--gold);
+  animation: pulseGold 1.4s ease-in-out infinite;
+}
+.ap-chest.opened {
+  opacity: 0.5;
+  color: #5fd06a;
+}
+.ap-count {
+  text-align: right;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.mission-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+.mission-row.claimed {
+  opacity: 0.55;
+}
+.mission-info {
+  flex: 1;
+}
+.mission-desc {
+  font-weight: 600;
+  font-size: 0.86rem;
+}
+.mission-bar {
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 0;
+  overflow: hidden;
+}
+.mission-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #5fd06a, #3aa84a);
+}
+.mission-meta {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.mission-row .btn {
+  flex: 0 0 auto;
+}
+
 /* ---------- FTUE (onboarding) ---------- */
 .ftue {
   position: fixed;

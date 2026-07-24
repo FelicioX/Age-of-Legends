@@ -42,6 +42,8 @@
       campaignStage: 1,
       idle: { lastCollect: Date.now() },
       ftue: { step: 0, done: false, firstWinDone: false },
+      login: { claimedDay: null, index: 0 },
+      missions: { day: null, progress: {}, claimed: {}, ap: 0, chests: {} },
       clock: 0,
       day: 1,
       lastTs: Date.now(),
@@ -110,6 +112,25 @@
     Object.keys(cost).forEach(function (k) {
       state.resources[k] -= cost[k];
     });
+  }
+
+  // Grant a mixed reward object: { gold, food, wood, stone, iron, gems, heroXp }.
+  function grantReward(r) {
+    if (!r) return;
+    AOL.RES.forEach(function (k) {
+      if (r[k]) state.resources[k] += r[k];
+    });
+    if (r.gems) state.gems += r.gems;
+    if (r.heroXp) grantHeroXp(r.heroXp);
+  }
+  function rewardText(r) {
+    var parts = [];
+    AOL.RES.forEach(function (k) {
+      if (r[k]) parts.push(AOL.RES_ICON[k] + AOL.fmt(r[k]));
+    });
+    if (r.gems) parts.push('💎' + r.gems);
+    if (r.heroXp) parts.push('✨' + r.heroXp);
+    return parts.join(' ');
   }
 
   // ------------------------------------------------------------ build queue ---
@@ -205,6 +226,7 @@
         b.upgradeEndsAt = 0;
         b.upgradeTotalMs = 0;
         state.jobs.splice(state.jobs.indexOf(j), 1);
+        bumpMission('upgrade', 1);
         toast(AOL.BUILDINGS[j.type].name + ' upgraded to Lv ' + b.level + '!', 'gold');
         if (j.type === 'castle') toast('New building tiers unlocked!', 'good');
       });
@@ -250,6 +272,7 @@
       'kingdomLevel',
       'heroGrid',
       'campaignBody',
+      'dailyBody',
       'buildQueue',
       'ftue',
       'toasts',
@@ -623,6 +646,7 @@
     }
     spend(cost);
     h.level++;
+    bumpMission('levelup', 1);
     toast(h.name + ' is now Lv ' + h.level + '!', 'gold');
     refreshHud();
     renderHeroes();
@@ -1036,6 +1060,7 @@
     state.resources.gold += p.gold;
     grantHeroXp(p.heroXp);
     state.idle.lastCollect = Date.now();
+    bumpMission('idle', 1);
     AOL.Audio.sfx('victory');
     toast('Idle rewards: 🪙' + AOL.fmt(p.gold) + ' ✨' + AOL.fmt(p.heroXp), 'gold');
     refreshHud();
@@ -1057,6 +1082,7 @@
     state.resources.gold += reward.gold;
     state.gems += reward.gems;
     grantHeroXp(reward.heroXp);
+    bumpMission('sweep', 1);
     AOL.Audio.sfx('click');
     toast('Swept Stage ' + s + ': 🪙' + reward.gold + ' 💎' + reward.gems, 'good');
     refreshHud();
@@ -1124,6 +1150,7 @@
           state.gems += reward.gems;
           grantHeroXp(reward.heroXp);
           state.campaignStage++;
+          bumpMission('win', 1);
           toast('Victory! Stage ' + (state.campaignStage - 1) + ' cleared.', 'good');
           if (state.ftue && !state.ftue.firstWinDone) {
             state.ftue.firstWinDone = true;
@@ -1151,6 +1178,203 @@
     });
   }
 
+  // ----------------------------------------------------------- dailies ---
+  // Reset missions when the calendar day rolls over. Login availability is
+  // derived from login.claimedDay vs today.
+  function ensureDaily() {
+    var today = AOL.dayKey();
+    if (state.missions.day !== today) {
+      state.missions.day = today;
+      state.missions.progress = {};
+      state.missions.claimed = {};
+      state.missions.ap = 0;
+      state.missions.chests = {};
+    }
+  }
+  function bumpMission(type, n) {
+    ensureDaily();
+    var changed = false;
+    AOL.MISSIONS.forEach(function (m) {
+      if (m.type !== type) return;
+      var cur = state.missions.progress[m.id] || 0;
+      if (cur < m.goal) {
+        state.missions.progress[m.id] = Math.min(m.goal, cur + (n || 1));
+        changed = true;
+      }
+    });
+    if (changed && currentView === 'daily') renderDaily();
+  }
+  function loginCanClaim() {
+    return state.login.claimedDay !== AOL.dayKey();
+  }
+  function claimLogin() {
+    if (!loginCanClaim()) return;
+    var r = AOL.LOGIN_REWARDS[state.login.index % AOL.LOGIN_REWARDS.length];
+    grantReward(r);
+    state.login.claimedDay = AOL.dayKey();
+    state.login.index = (state.login.index + 1) % AOL.LOGIN_REWARDS.length;
+    AOL.Audio.sfx('victory');
+    toast('Login reward: ' + rewardText(r), 'gold');
+    refreshHud();
+    renderDaily();
+    save();
+  }
+  function missionDone(m) {
+    return (state.missions.progress[m.id] || 0) >= m.goal;
+  }
+  function claimMission(id) {
+    ensureDaily();
+    var m = AOL.MISSIONS.find(function (x) {
+      return x.id === id;
+    });
+    if (!m || !missionDone(m) || state.missions.claimed[id]) return;
+    state.missions.claimed[id] = true;
+    state.missions.ap = Math.min(AOL.ACTIVITY_MAX, state.missions.ap + m.ap);
+    grantReward(m.reward);
+    AOL.Audio.sfx('click');
+    toast('Mission complete: ' + rewardText(m.reward), 'gold');
+    refreshHud();
+    renderDaily();
+    save();
+  }
+  function claimChest(i) {
+    ensureDaily();
+    var c = AOL.ACTIVITY_CHESTS[i];
+    if (!c || state.missions.ap < c.ap || state.missions.chests[i]) return;
+    state.missions.chests[i] = true;
+    grantReward(c.reward);
+    AOL.Audio.sfx('victory');
+    toast('Activity chest: ' + rewardText(c.reward), 'gold');
+    refreshHud();
+    renderDaily();
+    save();
+  }
+
+  function renderDaily() {
+    ensureDaily();
+    if (!el.dailyBody) return;
+    var html = '';
+
+    // Login calendar.
+    html += '<div class="view-sub">Daily login</div>';
+    html += '<div class="login-grid">';
+    for (var i = 0; i < AOL.LOGIN_REWARDS.length; i++) {
+      var r = AOL.LOGIN_REWARDS[i];
+      var isNext = i === state.login.index;
+      var claimedCell = loginPassed(i);
+      html +=
+        '<div class="login-cell' +
+        (isNext && loginCanClaim() ? ' next' : '') +
+        (claimedCell ? ' claimed' : '') +
+        '">' +
+        '<div class="login-day">' +
+        r.label +
+        '</div>' +
+        '<div class="login-ico">' +
+        r.icon +
+        '</div>' +
+        '<div class="login-amt">' +
+        rewardText(r) +
+        '</div>' +
+        (claimedCell ? '<div class="login-check">✓</div>' : '') +
+        '</div>';
+    }
+    html += '</div>';
+    html +=
+      '<button class="btn ' +
+      (loginCanClaim() ? 'gold' : '') +
+      '" id="loginClaim" ' +
+      (loginCanClaim() ? '' : 'disabled') +
+      ' style="width:100%;margin:0.5rem 0 1rem">' +
+      (loginCanClaim() ? 'Claim today’s reward' : 'Come back tomorrow') +
+      '</button>';
+
+    // Activity meter + chests.
+    var ap = state.missions.ap;
+    html += '<div class="view-sub">Daily activity</div>';
+    html += '<div class="activity">';
+    html +=
+      '<div class="ap-bar"><span style="width:' +
+      Math.round((ap / AOL.ACTIVITY_MAX) * 100) +
+      '%"></span>';
+    AOL.ACTIVITY_CHESTS.forEach(function (c, i) {
+      var ready = ap >= c.ap && !state.missions.chests[i];
+      html +=
+        '<button class="ap-chest' +
+        (state.missions.chests[i] ? ' opened' : '') +
+        (ready ? ' ready' : '') +
+        '" data-chest="' +
+        i +
+        '" style="left:' +
+        Math.round((c.ap / AOL.ACTIVITY_MAX) * 100) +
+        '%" title="' +
+        c.ap +
+        ' AP · ' +
+        rewardText(c.reward) +
+        '">' +
+        (state.missions.chests[i] ? '✓' : c.icon) +
+        '</button>';
+    });
+    html += '</div><div class="ap-count">' + ap + ' / ' + AOL.ACTIVITY_MAX + ' AP</div></div>';
+
+    // Missions.
+    html += '<div class="view-sub">Missions</div>';
+    html += '<div class="mission-list">';
+    AOL.MISSIONS.forEach(function (m) {
+      var prog = Math.min(m.goal, state.missions.progress[m.id] || 0);
+      var done = prog >= m.goal;
+      var claimed = state.missions.claimed[m.id];
+      html +=
+        '<div class="mission-row' +
+        (claimed ? ' claimed' : '') +
+        '">' +
+        '<div class="mission-info"><div class="mission-desc">' +
+        m.desc +
+        '</div>' +
+        '<div class="mission-bar"><span style="width:' +
+        Math.round((prog / m.goal) * 100) +
+        '%"></span></div>' +
+        '<div class="mission-meta">' +
+        prog +
+        '/' +
+        m.goal +
+        ' · +' +
+        m.ap +
+        ' AP · ' +
+        rewardText(m.reward) +
+        '</div></div>' +
+        '<button class="btn ' +
+        (done && !claimed ? 'green' : '') +
+        '" data-mission="' +
+        m.id +
+        '" ' +
+        (done && !claimed ? '' : 'disabled') +
+        '>' +
+        (claimed ? '✓' : 'Claim') +
+        '</button></div>';
+    });
+    html += '</div>';
+
+    el.dailyBody.innerHTML = html;
+    var lc = document.getElementById('loginClaim');
+    if (lc) lc.onclick = claimLogin;
+    el.dailyBody.querySelectorAll('[data-mission]').forEach(function (btn) {
+      btn.onclick = function () {
+        claimMission(btn.getAttribute('data-mission'));
+      };
+    });
+    el.dailyBody.querySelectorAll('[data-chest]').forEach(function (btn) {
+      btn.onclick = function () {
+        claimChest(parseInt(btn.getAttribute('data-chest'), 10));
+      };
+    });
+  }
+  // Whether login cell i has already been granted in the current cycle.
+  function loginPassed(i) {
+    // Cells before the current index in this cycle are considered claimed.
+    return i < state.login.index;
+  }
+
   // ----------------------------------------------------------------- views ---
   var currentView = 'kingdom';
   function switchView(v) {
@@ -1164,6 +1388,7 @@
     });
     if (v === 'heroes') renderHeroes();
     if (v === 'campaign') renderCampaign();
+    if (v === 'daily') renderDaily();
     if (v === 'kingdom') AOL.Kingdom.resize();
   }
 
@@ -1257,6 +1482,9 @@
     if (!state.formation) state.formation = {};
     if (!state.idle) state.idle = { lastCollect: Date.now() };
     if (!state.ftue) state.ftue = { step: 0, done: true, firstWinDone: true };
+    if (!state.login) state.login = { claimedDay: null, index: 0 };
+    if (!state.missions)
+      state.missions = { day: null, progress: {}, claimed: {}, ap: 0, chests: {} };
     if (!state.jobs) {
       state.jobs = [];
       // Convert any in-flight legacy upgrade into an active job.
@@ -1329,6 +1557,7 @@
       if (e.target === el.modal) closeModal();
     });
 
+    ensureDaily();
     refreshHud();
     renderQueue();
     if (!state.ftue.done) startFtue();

@@ -674,6 +674,65 @@ window.AOL = window.AOL || {};
     },
   ];
 
+  // --- Dailies: login calendar & missions ---------------------------------
+  AOL.dayKey = function (ts) {
+    var d = new Date(ts == null ? Date.now() : ts);
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  };
+  // 7-day login calendar (cycles). Rewards escalate through the week.
+  AOL.LOGIN_REWARDS = [
+    { label: 'Day 1', gold: 400, icon: '🪙' },
+    { label: 'Day 2', gems: 30, icon: '💎' },
+    { label: 'Day 3', heroXp: 300, icon: '✨' },
+    { label: 'Day 4', gold: 800, icon: '🪙' },
+    { label: 'Day 5', gems: 50, icon: '💎' },
+    { label: 'Day 6', food: 600, wood: 600, icon: '📦' },
+    { label: 'Day 7', gems: 120, heroXp: 500, icon: '🎁' },
+  ];
+  // Daily missions. `type` is bumped by gameplay events; goal completes it.
+  AOL.MISSIONS = [
+    { id: 'm_win', type: 'win', goal: 3, desc: 'Win 3 battles', ap: 20, reward: { gems: 30 } },
+    {
+      id: 'm_upg',
+      type: 'upgrade',
+      goal: 1,
+      desc: 'Upgrade a building',
+      ap: 20,
+      reward: { gold: 600 },
+    },
+    {
+      id: 'm_lvl',
+      type: 'levelup',
+      goal: 2,
+      desc: 'Level up heroes 2×',
+      ap: 20,
+      reward: { heroXp: 300 },
+    },
+    {
+      id: 'm_sweep',
+      type: 'sweep',
+      goal: 2,
+      desc: 'Sweep 2 stages',
+      ap: 20,
+      reward: { gems: 15 },
+    },
+    {
+      id: 'm_idle',
+      type: 'idle',
+      goal: 1,
+      desc: 'Collect idle rewards',
+      ap: 20,
+      reward: { gold: 300 },
+    },
+  ];
+  // Activity-point milestone chests (like a daily-quest meter).
+  AOL.ACTIVITY_CHESTS = [
+    { ap: 40, reward: { gems: 20 }, icon: '📦' },
+    { ap: 80, reward: { gems: 40 }, icon: '🎁' },
+    { ap: 100, reward: { gems: 60, heroXp: 200 }, icon: '👑' },
+  ];
+  AOL.ACTIVITY_MAX = 100;
+
   AOL.fmt = function (n) {
     n = Math.floor(n);
     if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
