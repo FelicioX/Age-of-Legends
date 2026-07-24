@@ -13,7 +13,7 @@ export class WorldRuntime {
   private readonly stepMs: number;
   private timer: ReturnType<typeof setInterval> | undefined;
 
-  constructor(private readonly config: ServerConfig) {
+  constructor(config: ServerConfig) {
     this.world = new World(config.worldSeed);
     this.stepMs = 1000 / config.simTickRate;
     this.registerSystems();

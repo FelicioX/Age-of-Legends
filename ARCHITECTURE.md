@@ -10,8 +10,8 @@ boundaries and how data flows between them. Deep dives live under
    the ECS runtime in `engine/`. The same core runs on the authoritative server and, in a
    read-only predictive form, on the client. This mirrors the single-core philosophy proven by
    the engineering reference and avoids logic duplication between client and server.
-2. **Authoritative server.** The server owns all game state. Clients send *intents*; the server
-   validates, simulates and broadcasts *snapshots*. Clients never mutate authoritative state.
+2. **Authoritative server.** The server owns all game state. Clients send _intents_; the server
+   validates, simulates and broadcasts _snapshots_. Clients never mutate authoritative state.
 3. **Clean layering.** Dependencies point inward: `client`/`server` depend on `game`, which
    depends on `engine` and `shared`. `shared` depends on nothing internal.
 4. **High cohesion, low coupling.** Each package and system owns one concern and communicates

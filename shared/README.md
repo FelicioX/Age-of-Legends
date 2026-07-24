@@ -6,15 +6,15 @@ internal.
 
 ## Modules
 
-| Module        | Contents                                                              |
-| ------------- | -------------------------------------------------------------------- |
-| `types`       | Branded identifier types (`EntityId`, `PlayerId`, …) and primitives  |
-| `math`        | Deterministic math: vectors, scalars, seeded RNG, hashing            |
-| `constants`   | Global tunable constants (tick rate, party size, resources, …)       |
-| `protocol`    | The versioned client/server message contract                         |
-| `validation`  | Zod schemas validating inbound messages at the trust boundary        |
-| `events`      | Canonical shared event names                                         |
-| `utilities`   | Small, side-effect-free helpers                                      |
+| Module       | Contents                                                            |
+| ------------ | ------------------------------------------------------------------- |
+| `types`      | Branded identifier types (`EntityId`, `PlayerId`, …) and primitives |
+| `math`       | Deterministic math: vectors, scalars, seeded RNG, hashing           |
+| `constants`  | Global tunable constants (tick rate, party size, resources, …)      |
+| `protocol`   | The versioned client/server message contract                        |
+| `validation` | Zod schemas validating inbound messages at the trust boundary       |
+| `events`     | Canonical shared event names                                        |
+| `utilities`  | Small, side-effect-free helpers                                     |
 
 ## Determinism
 

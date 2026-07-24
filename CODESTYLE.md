@@ -32,7 +32,7 @@ This file is a quick reference. The authoritative style guide is
 
 ## Comments
 
-- Comments explain *why*, not *what*. Document non-obvious business rules and technical decisions.
+- Comments explain _why_, not _what_. Document non-obvious business rules and technical decisions.
 - No decorative banners, attributions or generated-code markers.
 
 ## Tests

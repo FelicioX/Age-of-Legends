@@ -1,7 +1,7 @@
 ---
 name: Optimization
 about: Report a performance issue or propose an optimization
-title: "[Perf] "
+title: '[Perf] '
 labels: performance
 ---
 

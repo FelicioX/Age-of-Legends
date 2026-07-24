@@ -17,7 +17,7 @@ export class Rng {
 
   constructor(seed: number) {
     // Normalize to unsigned 32-bit; avoid a zero state.
-    this.state = (seed >>> 0) || 0x1a2b3c4d;
+    this.state = seed >>> 0 || 0x1a2b3c4d;
   }
 
   /** Create a generator from a textual seed (e.g. a world seed). */
@@ -32,7 +32,7 @@ export class Rng {
 
   /** Restore a previously captured state. */
   setState(state: number): void {
-    this.state = (state >>> 0) || 0x1a2b3c4d;
+    this.state = state >>> 0 || 0x1a2b3c4d;
   }
 
   /** Return an independent copy with the same state. */
@@ -47,7 +47,7 @@ export class Rng {
     let t = this.state;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0);
+    return (t ^ (t >>> 14)) >>> 0;
   }
 
   /** Next float in the half-open range [0, 1). */
@@ -66,7 +66,7 @@ export class Rng {
   }
 
   /** Next boolean with the given probability of `true` (default 0.5). */
-  nextBool(probability: number = 0.5): boolean {
+  nextBool(probability = 0.5): boolean {
     return this.nextFloat() < probability;
   }
 

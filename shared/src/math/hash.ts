@@ -22,10 +22,18 @@ export function hashStringToUint32(input: string): number {
   return hash >>> 0;
 }
 
-/** Mix two 32-bit integers into a new well-distributed 32-bit integer. */
+/**
+ * Mix two 32-bit integers into a new well-distributed 32-bit integer.
+ *
+ * The combination is order-dependent: `mixSeeds(a, b)` differs from
+ * `mixSeeds(b, a)`. This matters when deriving distinct sub-seeds from the same
+ * pair of inputs (for example, per-shard or per-entity streams).
+ */
 export function mixSeeds(a: number, b: number): number {
-  let h = (a ^ 0x9e3779b9) >>> 0;
-  h = Math.imul(h ^ (b >>> 0), FNV_PRIME) >>> 0;
-  h ^= h >>> 15;
+  let h = ((a >>> 0) ^ 0x9e3779b9) >>> 0;
+  h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h = (h ^ (b >>> 0)) >>> 0;
+  h = Math.imul(h, 0xc2b2ae35) >>> 0;
+  h ^= h >>> 16;
   return h >>> 0;
 }

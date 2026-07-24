@@ -7,13 +7,13 @@ into parties. Heroes are original characters with distinct archetypes, kits and 
 
 ## Archetypes
 
-| Archetype  | Role                | Fantasy                                        |
-| ---------- | ------------------- | ---------------------------------------------- |
-| Vanguard   | Frontline / tank    | Absorbs damage, controls space, holds threat   |
-| Ranger     | Ranged physical DPS | Sustained precision damage from range          |
-| Mystic     | Ranged magical DPS  | Burst and area magical damage                  |
-| Warden     | Support / healer    | Healing, shields and cleanses                  |
-| Artificer  | Control / utility   | Traps, summons, buffs and battlefield control  |
+| Archetype | Role                | Fantasy                                       |
+| --------- | ------------------- | --------------------------------------------- |
+| Vanguard  | Frontline / tank    | Absorbs damage, controls space, holds threat  |
+| Ranger    | Ranged physical DPS | Sustained precision damage from range         |
+| Mystic    | Ranged magical DPS  | Burst and area magical damage                 |
+| Warden    | Support / healer    | Healing, shields and cleanses                 |
+| Artificer | Control / utility   | Traps, summons, buffs and battlefield control |
 
 Archetypes define role, base stat curves and skill themes. Individual heroes vary within an
 archetype.

@@ -5,14 +5,14 @@ exploration, strategic combat and large-scale multiplayer.
 
 ## At a Glance
 
-| Field            | Value                                                            |
-| ---------------- | ---------------------------------------------------------------- |
-| Genre            | MMORPG — exploration, base building, persistent progression      |
-| Platforms        | Web browser and mobile (single codebase)                         |
-| Perspective      | Top-down 2D                                                      |
-| Monetization     | Ethical, non-pay-to-win (cosmetics, convenience, season passes)  |
-| Server model     | Authoritative, sharded, horizontally scalable                    |
-| Status           | Foundation phase (Milestone 0)                                   |
+| Field        | Value                                                           |
+| ------------ | --------------------------------------------------------------- |
+| Genre        | MMORPG — exploration, base building, persistent progression     |
+| Platforms    | Web browser and mobile (single codebase)                        |
+| Perspective  | Top-down 2D                                                     |
+| Monetization | Ethical, non-pay-to-win (cosmetics, convenience, season passes) |
+| Server model | Authoritative, sharded, horizontally scalable                   |
+| Status       | Foundation phase (Milestone 0)                                  |
 
 ## Core Pillars
 
@@ -35,9 +35,9 @@ online.
 
 Age of Legends draws on two independent references, kept strictly separate:
 
-- **Engineering reference** — informs *how the game is built*: architecture, the single simulation
+- **Engineering reference** — informs _how the game is built_: architecture, the single simulation
   core, authoritative networking, entity management and testing discipline.
-- **Gameplay reference** — informs *how the game feels to play*: the progression loop, pacing,
+- **Gameplay reference** — informs _how the game feels to play_: the progression loop, pacing,
   exploration, city evolution, team composition, events and long-term retention.
 
 Neither reference contributes any protected content. All characters, art, UI, text, names, story,

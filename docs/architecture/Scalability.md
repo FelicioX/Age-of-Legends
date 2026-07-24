@@ -50,9 +50,9 @@ horizontally as demand rises.
 
 ## Risks & Mitigations
 
-| Risk                         | Mitigation                                             |
-| ---------------------------- | ------------------------------------------------------ |
-| Hot regions overload a shard | Region sizing, dynamic re-sharding, soft population caps|
-| Cross-shard chatter          | Batching, targeted pub/sub channels                    |
-| DB write pressure            | Write-behind batching, aggregate boundaries            |
-| Snapshot bandwidth           | Interest management, delta encoding, rate tuning       |
+| Risk                         | Mitigation                                               |
+| ---------------------------- | -------------------------------------------------------- |
+| Hot regions overload a shard | Region sizing, dynamic re-sharding, soft population caps |
+| Cross-shard chatter          | Batching, targeted pub/sub channels                      |
+| DB write pressure            | Write-behind batching, aggregate boundaries              |
+| Snapshot bandwidth           | Interest management, delta encoding, rate tuning         |

@@ -1,7 +1,7 @@
 ---
 name: Gameplay
 about: Raise a gameplay design question or issue
-title: "[Gameplay] "
+title: '[Gameplay] '
 labels: gameplay
 ---
 

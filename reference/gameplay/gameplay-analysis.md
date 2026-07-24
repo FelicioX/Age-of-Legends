@@ -1,6 +1,6 @@
 # Gameplay Analysis
 
-An analysis of *why* the studied genre patterns work, so Age of Legends can reproduce the
+An analysis of _why_ the studied genre patterns work, so Age of Legends can reproduce the
 underlying player value with original systems.
 
 ## Why the Loop Works
@@ -31,10 +31,10 @@ with guild progression and contribution-based world bosses.
 
 ## Risks Observed (and Our Guardrails)
 
-| Risk in the genre                     | Our guardrail                                            |
-| ------------------------------------- | -------------------------------------------------------- |
-| Pay-to-win eroding fairness           | Hard non-power monetization rule ([../../docs/gdd/Monetization.md](../../docs/gdd/Monetization.md)) |
-| Grind fatigue                         | Multi-track progression and generous early pacing        |
-| Economic inflation                    | Deliberate sinks and data-driven tuning ([economy.md](economy.md)) |
-| Snowballing / new-player gap          | Matchmaking, protection windows, catch-up mechanics      |
-| Content burnout                       | LiveOps cadence and dynamic events ([retention.md](retention.md)) |
+| Risk in the genre            | Our guardrail                                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| Pay-to-win eroding fairness  | Hard non-power monetization rule ([../../docs/gdd/Monetization.md](../../docs/gdd/Monetization.md)) |
+| Grind fatigue                | Multi-track progression and generous early pacing                                                   |
+| Economic inflation           | Deliberate sinks and data-driven tuning ([economy.md](economy.md))                                  |
+| Snowballing / new-player gap | Matchmaking, protection windows, catch-up mechanics                                                 |
+| Content burnout              | LiveOps cadence and dynamic events ([retention.md](retention.md))                                   |

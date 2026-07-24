@@ -1,7 +1,7 @@
 ---
 name: Technical debt
 about: Flag technical debt to be addressed
-title: "[Tech Debt] "
+title: '[Tech Debt] '
 labels: tech-debt
 ---
 

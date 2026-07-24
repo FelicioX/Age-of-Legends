@@ -1,7 +1,7 @@
 ---
 name: Balancing
 about: Propose a balance change to combat, economy or progression
-title: "[Balance] "
+title: '[Balance] '
 labels: balancing
 ---
 

@@ -14,7 +14,7 @@
   // --- Deterministic RNG (mulberry32) --------------------------------------
   class Rng {
     constructor(seed) {
-      this.state = (seed >>> 0) || 0x1a2b3c4d;
+      this.state = seed >>> 0 || 0x1a2b3c4d;
     }
     nextUint32() {
       this.state = (this.state + 0x6d2b79f5) >>> 0;
@@ -54,8 +54,14 @@
 
   // --- Building definitions -------------------------------------------------
   const BUILDINGS = [
-    { key: 'townhall', name: 'Town Hall', ico: '🏰', res: 'gold', base: 0.15,
-      desc: 'Gates every other building tier.' },
+    {
+      key: 'townhall',
+      name: 'Town Hall',
+      ico: '🏰',
+      res: 'gold',
+      base: 0.15,
+      desc: 'Gates every other building tier.',
+    },
     { key: 'sawmill', name: 'Sawmill', ico: '🪚', res: 'wood', base: 0.7, desc: 'Produces wood.' },
     { key: 'quarry', name: 'Quarry', ico: '🧱', res: 'stone', base: 0.55, desc: 'Produces stone.' },
     { key: 'mine', name: 'Mine', ico: '⛏️', res: 'iron', base: 0.4, desc: 'Produces iron.' },
@@ -94,11 +100,11 @@
     return 0.6 * valueNoise(seed, x, y, 9) + 0.4 * valueNoise(seed + 101, x, y, 3.5);
   }
   function biome(e) {
-    if (e < 0.30) return { type: 'water', color: '#16324f', walk: false };
+    if (e < 0.3) return { type: 'water', color: '#16324f', walk: false };
     if (e < 0.35) return { type: 'sand', color: '#5c5231', walk: true };
-    if (e < 0.60) return { type: 'grass', color: '#25412a', walk: true };
+    if (e < 0.6) return { type: 'grass', color: '#25412a', walk: true };
     if (e < 0.76) return { type: 'forest', color: '#1c3220', walk: true };
-    if (e < 0.90) return { type: 'rock', color: '#3a3f47', walk: true };
+    if (e < 0.9) return { type: 'rock', color: '#3a3f47', walk: true };
     return { type: 'snow', color: '#8894a3', walk: true };
   }
   function isWalkable(seed, col, row) {
@@ -128,8 +134,15 @@
       resources: { wood: 60, stone: 40, iron: 20, food: 80, gold: 30 },
       buildings: { townhall: 1, sawmill: 1, quarry: 1, mine: 1, farm: 1, market: 1 },
       party: {
-        x: sx + 0.5, y: sy + 0.5, tx: sx + 0.5, ty: sy + 0.5,
-        speed: 3.2, level: 1, xp: 0, xpNext: 20, power: 12,
+        x: sx + 0.5,
+        y: sy + 0.5,
+        tx: sx + 0.5,
+        ty: sy + 0.5,
+        speed: 3.2,
+        level: 1,
+        xp: 0,
+        xpNext: 20,
+        power: 12,
       },
       home: { x: sx + 0.5, y: sy + 0.5 },
       nodes: [],
@@ -208,13 +221,17 @@
     const scale = Math.pow(level, 1.65);
     if (key === 'townhall') {
       return {
-        wood: Math.round(80 * scale), stone: Math.round(70 * scale),
-        iron: Math.round(35 * scale), gold: Math.round(40 * scale),
+        wood: Math.round(80 * scale),
+        stone: Math.round(70 * scale),
+        iron: Math.round(35 * scale),
+        gold: Math.round(40 * scale),
       };
     }
     return {
-      wood: Math.round(30 * scale), stone: Math.round(22 * scale),
-      iron: Math.round(12 * scale), gold: Math.round(8 * scale),
+      wood: Math.round(30 * scale),
+      stone: Math.round(22 * scale),
+      iron: Math.round(12 * scale),
+      gold: Math.round(8 * scale),
     };
   }
   function canAfford(cost) {
@@ -283,7 +300,11 @@
       state.resources.gold += gold;
       state.resources.iron += iron;
       gainXp(xp);
-      pushLog(state, `Cleared a camp (power ${camp.power}). Loot: ${gold} gold, ${iron} iron.`, 'big');
+      pushLog(
+        state,
+        `Cleared a camp (power ${camp.power}). Loot: ${gold} gold, ${iron} iron.`,
+        'big',
+      );
       state.camps.splice(index, 1);
       spawnCamp(state, rng);
     } else {
@@ -293,7 +314,11 @@
       p.ty = state.home.y;
       p.x = state.home.x;
       p.y = state.home.y;
-      pushLog(state, `The party was repelled (power ${camp.power}) and retreated home. Lost ${Math.floor(lost)} food.`, 'bad');
+      pushLog(
+        state,
+        `The party was repelled (power ${camp.power}) and retreated home. Lost ${Math.floor(lost)} food.`,
+        'bad',
+      );
     }
   }
 
@@ -429,12 +454,12 @@
       const level = state.buildings[def.key];
       const atCap = level >= maxTierFor(def.key);
       const cost = upgradeCost(def.key, level + 1);
-      const costStr = Object.keys(cost).map((k) => `${NODE_ICON[k] || '🪙'}${fmt(cost[k])}`).join(' ');
+      const costStr = Object.keys(cost)
+        .map((k) => `${NODE_ICON[k] || '🪙'}${fmt(cost[k])}`)
+        .join(' ');
       const rate = (def.base * level).toFixed(1);
       const affordable = canAfford(cost) && !atCap;
-      const label = atCap
-        ? (def.key === 'townhall' ? 'Max' : 'Town Hall req.')
-        : `Lv ${level + 1}`;
+      const label = atCap ? (def.key === 'townhall' ? 'Max' : 'Town Hall req.') : `Lv ${level + 1}`;
       html += `
         <div class="building">
           <span class="b-ico">${def.ico}</span>
@@ -497,8 +522,18 @@
     if (!canAfford(cost)) return;
     for (const k of Object.keys(cost)) state.resources[k] -= cost[k];
     state.buildings[key] += 1;
-    if (key === 'townhall') pushLog(state, `Town Hall upgraded to level ${state.buildings[key]}. New tiers unlocked.`, 'big');
-    else pushLog(state, `${BUILDINGS.find((b) => b.key === key).name} upgraded to level ${state.buildings[key]}.`, 'good');
+    if (key === 'townhall')
+      pushLog(
+        state,
+        `Town Hall upgraded to level ${state.buildings[key]}. New tiers unlocked.`,
+        'big',
+      );
+    else
+      pushLog(
+        state,
+        `${BUILDINGS.find((b) => b.key === key).name} upgraded to level ${state.buildings[key]}.`,
+        'good',
+      );
     renderHud();
   });
 

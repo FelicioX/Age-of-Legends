@@ -40,9 +40,14 @@ export default tseslint.config(
     },
   },
   {
+    // Test files are outside the build tsconfigs, so type-aware linting is
+    // disabled for them; they are still linted syntactically.
     files: ['**/*.test.ts', '**/*.spec.ts', '**/tests/**/*.ts'],
+    ...tseslint.configs.disableTypeChecked,
     rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
       '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
       'no-console': 'off',
     },
   },

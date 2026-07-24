@@ -2,13 +2,13 @@
 
 ## Core Resources
 
-| Resource | Primary source      | Primary uses                                   |
-| -------- | ------------------- | ---------------------------------------------- |
-| Wood     | Sawmill / world     | Construction, low-tier crafting                |
-| Stone    | Quarry / world      | Construction, fortification                    |
-| Iron     | Mine / world        | Equipment crafting, upgrades                   |
-| Food     | Farm / world        | Hero training, upkeep, consumables             |
-| Gold     | Trade / quests / world | Market, acceleration, high-tier upgrades    |
+| Resource | Primary source         | Primary uses                             |
+| -------- | ---------------------- | ---------------------------------------- |
+| Wood     | Sawmill / world        | Construction, low-tier crafting          |
+| Stone    | Quarry / world         | Construction, fortification              |
+| Iron     | Mine / world           | Equipment crafting, upgrades             |
+| Food     | Farm / world           | Hero training, upkeep, consumables       |
+| Gold     | Trade / quests / world | Market, acceleration, high-tier upgrades |
 
 ## Acquisition
 

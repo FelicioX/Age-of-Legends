@@ -47,11 +47,7 @@ export interface GatherIntent {
 }
 
 export type ClientMessage =
-  | HandshakeMessage
-  | PingMessage
-  | MoveIntent
-  | UseSkillIntent
-  | GatherIntent;
+  HandshakeMessage | PingMessage | MoveIntent | UseSkillIntent | GatherIntent;
 
 /** All intent messages carry a monotonic `seq` for reconciliation. */
 export type Intent = MoveIntent | UseSkillIntent | GatherIntent;

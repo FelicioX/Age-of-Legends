@@ -13,7 +13,7 @@ export class FixedStepLoop {
 
   constructor(
     private readonly stepMs: number = SIM_STEP_MS,
-    private readonly maxStepsPerAdvance: number = 5,
+    private readonly maxStepsPerAdvance = 5,
   ) {
     if (stepMs <= 0) throw new RangeError('stepMs must be positive');
   }

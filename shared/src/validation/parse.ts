@@ -2,8 +2,7 @@ import { clientMessageSchema, type ValidatedClientMessage } from './schemas.js';
 
 /** Discriminated result of a validation attempt. */
 export type ParseResult<T> =
-  | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly error: string };
+  { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: string };
 
 /**
  * Validate and parse raw JSON text received from a client into a typed message.

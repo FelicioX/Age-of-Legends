@@ -56,20 +56,20 @@ explore a procedurally generated world with fog of war, gather from nodes and cl
 
 ## Technology Stack
 
-| Layer            | Technology                          | Rationale (summary)                                    |
-| ---------------- | ----------------------------------- | ------------------------------------------------------ |
-| Language         | TypeScript (strict)                 | One typed language across client, server and shared    |
-| Runtime          | Node.js 22 LTS                      | Modern, performant, long-term support                  |
-| Monorepo         | pnpm workspaces + Turborepo         | Fast, cache-aware builds across packages               |
-| Server API       | Fastify                             | High-throughput, schema-first HTTP services            |
-| Realtime         | WebSocket (`ws`)                    | Low-overhead authoritative realtime channel            |
-| Client shell     | React 19 + Vite                     | Mature UI layer with fast tooling                      |
-| Rendering        | PixiJS 8 (WebGL/WebGPU)             | High-performance 2D rendering with fine-grained control|
-| Persistence      | PostgreSQL                          | Durable, relational, transactional world state         |
-| Cache / Pub-Sub  | Redis                               | Presence, sessions, matchmaking and fan-out            |
-| Validation       | Zod                                 | Runtime validation of the network protocol             |
-| Tests            | Vitest                              | Fast unit/integration testing with coverage            |
-| Containers       | Docker / Docker Compose             | Reproducible local and CI infrastructure               |
+| Layer           | Technology                  | Rationale (summary)                                     |
+| --------------- | --------------------------- | ------------------------------------------------------- |
+| Language        | TypeScript (strict)         | One typed language across client, server and shared     |
+| Runtime         | Node.js 22 LTS              | Modern, performant, long-term support                   |
+| Monorepo        | pnpm workspaces + Turborepo | Fast, cache-aware builds across packages                |
+| Server API      | Fastify                     | High-throughput, schema-first HTTP services             |
+| Realtime        | WebSocket (`ws`)            | Low-overhead authoritative realtime channel             |
+| Client shell    | React 19 + Vite             | Mature UI layer with fast tooling                       |
+| Rendering       | PixiJS 8 (WebGL/WebGPU)     | High-performance 2D rendering with fine-grained control |
+| Persistence     | PostgreSQL                  | Durable, relational, transactional world state          |
+| Cache / Pub-Sub | Redis                       | Presence, sessions, matchmaking and fan-out             |
+| Validation      | Zod                         | Runtime validation of the network protocol              |
+| Tests           | Vitest                      | Fast unit/integration testing with coverage             |
+| Containers      | Docker / Docker Compose     | Reproducible local and CI infrastructure                |
 
 Full justification: [docs/architecture/Overview.md](docs/architecture/Overview.md) and
 [docs/adr/0002-technology-stack.md](docs/adr/0002-technology-stack.md).
@@ -123,14 +123,14 @@ pnpm run test
 
 ### Common Tasks
 
-| Command              | Description                                   |
-| -------------------- | --------------------------------------------- |
-| `pnpm run dev`       | Run all packages in watch mode                |
-| `pnpm run build`     | Build every workspace package                 |
-| `pnpm run test`      | Run the full test suite                       |
-| `pnpm run lint`      | Lint the codebase                             |
-| `pnpm run typecheck` | Type-check every package                      |
-| `pnpm run check`     | Format check + lint + typecheck + tests       |
+| Command              | Description                             |
+| -------------------- | --------------------------------------- |
+| `pnpm run dev`       | Run all packages in watch mode          |
+| `pnpm run build`     | Build every workspace package           |
+| `pnpm run test`      | Run the full test suite                 |
+| `pnpm run lint`      | Lint the codebase                       |
+| `pnpm run typecheck` | Type-check every package                |
+| `pnpm run check`     | Format check + lint + typecheck + tests |
 
 A `Makefile` mirrors these commands for convenience (`make help`).
 

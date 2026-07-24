@@ -4,8 +4,8 @@ This directory documents the **study of external references** and, crucially, re
 was **reinterpreted into an original design** for Age of Legends. It exists to keep a clear
 separation between:
 
-- **engineering inspiration** — proven patterns for how a game like this is *built*;
-- **gameplay inspiration** — proven patterns for how a game like this *feels to play*;
+- **engineering inspiration** — proven patterns for how a game like this is _built_;
+- **gameplay inspiration** — proven patterns for how a game like this _feels to play_;
 - **the original implementation** — what Age of Legends actually does.
 
 ## Ground Rules
@@ -19,11 +19,11 @@ separation between:
 
 ## Layout
 
-| Path                                   | Purpose                                              |
-| -------------------------------------- | ---------------------------------------------------- |
-| [architecture/](architecture/)         | Engineering patterns studied and adapted             |
-| [gameplay/](gameplay/)                 | Gameplay/retention patterns studied and adapted      |
-| [decisions/](decisions/)               | The adaptation log linking a pattern to our design   |
+| Path                           | Purpose                                            |
+| ------------------------------ | -------------------------------------------------- |
+| [architecture/](architecture/) | Engineering patterns studied and adapted           |
+| [gameplay/](gameplay/)         | Gameplay/retention patterns studied and adapted    |
+| [decisions/](decisions/)       | The adaptation log linking a pattern to our design |
 
 ## Method
 

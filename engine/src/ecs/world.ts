@@ -103,7 +103,7 @@ export class World {
       let matches = true;
       for (const type of types) {
         const store = this.stores.get(type.id);
-        if (store === undefined || !store.has(id)) {
+        if (store?.has(id) !== true) {
           matches = false;
           break;
         }

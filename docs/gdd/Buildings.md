@@ -8,18 +8,18 @@ progression.
 
 ## Core Buildings
 
-| Building     | Function                                                            |
-| ------------ | ------------------------------------------------------------------- |
-| Town Hall    | Sets kingdom level; gates the tier of all other buildings/features  |
-| Farm         | Produces food                                                       |
-| Mine         | Produces iron                                                       |
-| Quarry       | Produces stone                                                      |
-| Sawmill      | Produces wood                                                       |
-| Warehouse    | Increases resource storage capacity and raid protection             |
-| Barracks     | Recruits and trains troops/heroes; raises party capacity            |
-| Laboratory   | Runs research (see [Technologies.md](Technologies.md))              |
-| Workshop     | Crafts equipment and items (see [Crafting.md](Crafting.md))         |
-| Market       | Enables trade and the player market (see [Economy.md](Economy.md))  |
+| Building   | Function                                                           |
+| ---------- | ------------------------------------------------------------------ |
+| Town Hall  | Sets kingdom level; gates the tier of all other buildings/features |
+| Farm       | Produces food                                                      |
+| Mine       | Produces iron                                                      |
+| Quarry     | Produces stone                                                     |
+| Sawmill    | Produces wood                                                      |
+| Warehouse  | Increases resource storage capacity and raid protection            |
+| Barracks   | Recruits and trains troops/heroes; raises party capacity           |
+| Laboratory | Runs research (see [Technologies.md](Technologies.md))             |
+| Workshop   | Crafts equipment and items (see [Crafting.md](Crafting.md))        |
+| Market     | Enables trade and the player market (see [Economy.md](Economy.md)) |
 
 Additional buildings are introduced through progression and events.
 

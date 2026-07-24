@@ -40,11 +40,11 @@ Additional technical goals:
 
 ## Measures of Success
 
-| Dimension        | Measure                                                     |
-| ---------------- | ----------------------------------------------------------- |
-| Architecture     | Modularity, test coverage, absence of duplication/dead code |
-| Gameplay         | Depth and clarity of the core loop; playtest satisfaction   |
-| Extensibility    | Time and risk to add new content and systems                |
-| Stability        | Uptime and performance under load                           |
-| Player experience| Retention, session quality, accessibility                   |
-| Originality      | A distinct, protectable intellectual property               |
+| Dimension         | Measure                                                     |
+| ----------------- | ----------------------------------------------------------- |
+| Architecture      | Modularity, test coverage, absence of duplication/dead code |
+| Gameplay          | Depth and clarity of the core loop; playtest satisfaction   |
+| Extensibility     | Time and risk to add new content and systems                |
+| Stability         | Uptime and performance under load                           |
+| Player experience | Retention, session quality, accessibility                   |
+| Originality       | A distinct, protectable intellectual property               |

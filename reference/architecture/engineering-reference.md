@@ -6,16 +6,16 @@ principles are referenced; no source content is reproduced.
 
 ## Patterns Examined
 
-| Pattern                          | What it solves                                     | Age of Legends adaptation |
-| -------------------------------- | -------------------------------------------------- | ------------------------- |
-| Client/server separation         | Clear trust boundary, testable server              | `server` vs `client`, shared `game`/`engine`/`shared` |
-| Authoritative server             | Cheat resistance, single source of truth           | Intent → validate → simulate → snapshot (see [../../docs/architecture/Networking.md](../../docs/architecture/Networking.md)) |
-| Single simulation core           | One implementation of rules for server/client/tests| Deterministic ECS in `engine` + `game` (see [../../docs/architecture/ECS.md](../../docs/architecture/ECS.md)) |
-| Entity management                | Flexible, performant world state                   | Component storage keyed by type; stable entity ids |
-| Snapshot synchronization         | Consistent shared state at scale                   | Interest-managed snapshots/deltas, binary encoding |
-| Modular system organization      | Maintainability and low coupling                   | Package boundaries with enforced dependency direction |
-| Offline/headless capability      | Testing and future automation                      | Headless simulation for tests and future agent training |
-| Automated testing discipline     | Confidence and regression safety                   | Golden-master determinism + unit/integration suites |
+| Pattern                      | What it solves                                      | Age of Legends adaptation                                                                                                    |
+| ---------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Client/server separation     | Clear trust boundary, testable server               | `server` vs `client`, shared `game`/`engine`/`shared`                                                                        |
+| Authoritative server         | Cheat resistance, single source of truth            | Intent → validate → simulate → snapshot (see [../../docs/architecture/Networking.md](../../docs/architecture/Networking.md)) |
+| Single simulation core       | One implementation of rules for server/client/tests | Deterministic ECS in `engine` + `game` (see [../../docs/architecture/ECS.md](../../docs/architecture/ECS.md))                |
+| Entity management            | Flexible, performant world state                    | Component storage keyed by type; stable entity ids                                                                           |
+| Snapshot synchronization     | Consistent shared state at scale                    | Interest-managed snapshots/deltas, binary encoding                                                                           |
+| Modular system organization  | Maintainability and low coupling                    | Package boundaries with enforced dependency direction                                                                        |
+| Offline/headless capability  | Testing and future automation                       | Headless simulation for tests and future agent training                                                                      |
+| Automated testing discipline | Confidence and regression safety                    | Golden-master determinism + unit/integration suites                                                                          |
 
 ## Key Takeaways
 

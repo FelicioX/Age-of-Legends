@@ -4,14 +4,14 @@ The complete design and engineering knowledge base for Age of Legends.
 
 ## Structure
 
-| Directory                          | Contents                                                        |
-| ---------------------------------- | --------------------------------------------------------------- |
-| [vision/](vision/)                 | Product vision, pillars, design principles and goals            |
-| [gdd/](gdd/)                       | Game Design Document and per-system design                      |
-| [architecture/](architecture/)     | Technical architecture, networking, persistence, security       |
-| [roadmap/](roadmap/)               | Roadmap, milestones, releases and backlog                       |
-| [standards/](standards/)           | Coding, git, naming, review, testing and documentation standards|
-| [adr/](adr/)                       | Architecture Decision Records                                   |
+| Directory                      | Contents                                                         |
+| ------------------------------ | ---------------------------------------------------------------- |
+| [vision/](vision/)             | Product vision, pillars, design principles and goals             |
+| [gdd/](gdd/)                   | Game Design Document and per-system design                       |
+| [architecture/](architecture/) | Technical architecture, networking, persistence, security        |
+| [roadmap/](roadmap/)           | Roadmap, milestones, releases and backlog                        |
+| [standards/](standards/)       | Coding, git, naming, review, testing and documentation standards |
+| [adr/](adr/)                   | Architecture Decision Records                                    |
 
 ## Reading Order
 

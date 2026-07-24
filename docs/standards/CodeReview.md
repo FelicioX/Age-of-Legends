@@ -31,26 +31,32 @@ Before implementation, confirm the feature:
 ## Code Review Checklist
 
 **Correctness**
+
 - Does it do what the design specifies? Are edge cases handled?
 - For gameplay logic: is it deterministic and covered by tests?
 
 **Architecture**
+
 - Are module boundaries respected (no upward imports)?
 - Is coupling low and cohesion high? Any duplication introduced?
 
 **Quality**
+
 - Names, readability and comments explain intent.
 - No dead code, no unnecessary dependencies.
 - Errors handled and validated at boundaries.
 
 **Tests**
+
 - Adequate unit/integration coverage; a regression test for bug fixes.
 - Tests are deterministic and meaningful (not just coverage padding).
 
 **Docs**
+
 - Relevant docs and `CHANGELOG.md` updated; ADR added if a decision was made.
 
 **Performance & Security**
+
 - No obvious hot-path regressions; inputs validated; authority respected.
 
 ## Review Etiquette

@@ -4,18 +4,18 @@ Consistent names make the codebase navigable and self-documenting.
 
 ## Casing
 
-| Element                         | Convention               | Example                     |
-| ------------------------------- | ------------------------ | --------------------------- |
-| Types, interfaces, enums        | `PascalCase`             | `HeroArchetype`, `EntityId` |
-| Classes, React components       | `PascalCase`             | `WorldRenderer`, `HeroCard` |
-| Variables, functions, methods   | `camelCase`              | `spawnEntity`, `tickRate`   |
-| Module-level constants          | `SCREAMING_SNAKE_CASE`   | `MAX_PARTY_SIZE`            |
-| Type parameters                 | `PascalCase` (short)     | `T`, `TComponent`          |
-| Files (TypeScript)              | `kebab-case.ts`          | `system-scheduler.ts`      |
-| Files (React components)        | `PascalCase.tsx`         | `HeroCard.tsx`             |
-| Directories                     | `kebab-case`             | `world-editor`             |
-| Database tables/columns         | `snake_case`             | `guild_members`            |
-| Environment variables           | `SCREAMING_SNAKE_CASE`   | `SIM_TICK_RATE`            |
+| Element                       | Convention             | Example                     |
+| ----------------------------- | ---------------------- | --------------------------- |
+| Types, interfaces, enums      | `PascalCase`           | `HeroArchetype`, `EntityId` |
+| Classes, React components     | `PascalCase`           | `WorldRenderer`, `HeroCard` |
+| Variables, functions, methods | `camelCase`            | `spawnEntity`, `tickRate`   |
+| Module-level constants        | `SCREAMING_SNAKE_CASE` | `MAX_PARTY_SIZE`            |
+| Type parameters               | `PascalCase` (short)   | `T`, `TComponent`           |
+| Files (TypeScript)            | `kebab-case.ts`        | `system-scheduler.ts`       |
+| Files (React components)      | `PascalCase.tsx`       | `HeroCard.tsx`              |
+| Directories                   | `kebab-case`           | `world-editor`              |
+| Database tables/columns       | `snake_case`           | `guild_members`             |
+| Environment variables         | `SCREAMING_SNAKE_CASE` | `SIM_TICK_RATE`             |
 
 ## Semantics
 

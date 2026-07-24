@@ -17,13 +17,13 @@ trade is meaningful, and no single strategy trivializes progression.
 
 ## Faucets and Sinks
 
-| Faucets (sources)             | Sinks (drains)                                  |
-| ----------------------------- | ----------------------------------------------- |
-| Production and gathering      | Construction and upgrades                       |
-| Quest, event, dungeon rewards | Crafting and refining                           |
-| PvP and boss rewards          | Acceleration and convenience                    |
-| Market sales                  | Market fees and taxes                           |
-|                               | Repairs, reforging, consumables                 |
+| Faucets (sources)             | Sinks (drains)                  |
+| ----------------------------- | ------------------------------- |
+| Production and gathering      | Construction and upgrades       |
+| Quest, event, dungeon rewards | Crafting and refining           |
+| PvP and boss rewards          | Acceleration and convenience    |
+| Market sales                  | Market fees and taxes           |
+|                               | Repairs, reforging, consumables |
 
 The market fees/taxes are the primary macro sink that counteracts inflation.
 

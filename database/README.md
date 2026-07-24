@@ -4,12 +4,12 @@ PostgreSQL schema, migrations and seeds for Age of Legends.
 
 ## Layout
 
-| Path          | Purpose                                                           |
-| ------------- | ----------------------------------------------------------------- |
-| `schema/`     | Baseline schema applied on first container start                  |
-| `migrations/` | Ordered, incremental schema changes                               |
-| `seeds/`      | Development/content seed data                                     |
-| `backups/`    | Local backup artifacts (git-ignored)                              |
+| Path          | Purpose                                          |
+| ------------- | ------------------------------------------------ |
+| `schema/`     | Baseline schema applied on first container start |
+| `migrations/` | Ordered, incremental schema changes              |
+| `seeds/`      | Development/content seed data                    |
+| `backups/`    | Local backup artifacts (git-ignored)             |
 
 ## Local Development
 

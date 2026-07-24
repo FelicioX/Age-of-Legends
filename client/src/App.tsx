@@ -5,7 +5,7 @@ import { PROTOCOL_VERSION } from '@aol/shared';
  * canvas is mounted by the renderer in later milestones. For now this confirms
  * the client composes the shared package and the toolchain is wired up.
  */
-export function App(): JSX.Element {
+export function App() {
   return (
     <main className="app-shell">
       <h1>Age of Legends</h1>

@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Report a defect in Age of Legends
-title: "[Bug] "
+title: '[Bug] '
 labels: bug
 ---
 

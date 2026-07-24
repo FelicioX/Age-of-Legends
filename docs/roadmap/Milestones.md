@@ -8,12 +8,14 @@ complete only when all acceptance criteria pass and documentation is updated.
 **Objective:** a professional engineering baseline before gameplay code.
 
 Deliverables:
+
 - Monorepo (pnpm + Turborepo), TypeScript project references, lint/format, CI, Docker infra.
 - Full documentation set: vision, GDD, architecture, standards, ADRs.
 - `shared` domain core (types, math, constants, protocol, validation) with tests.
 - Buildable skeletons for engine, game, server, client.
 
 Acceptance:
+
 - `pnpm run check` passes (format, lint, typecheck, tests).
 - Documentation complete and internally linked.
 - Repository published and protected.

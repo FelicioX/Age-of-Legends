@@ -1,7 +1,7 @@
 packages:
-  - "shared"
-  - "engine"
-  - "game"
-  - "server"
-  - "client"
-  - "tools/*"
+  - 'shared'
+  - 'engine'
+  - 'game'
+  - 'server'
+  - 'client'
+  - 'tools/*'

@@ -16,13 +16,13 @@ state. This prevents cheating and keeps a single source of truth. See
 
 ## Message Categories
 
-| Direction        | Type       | Purpose                                            |
-| ---------------- | ---------- | -------------------------------------------------- |
-| Client → Server  | Intent     | Move, use skill, build, gather, trade, etc.        |
-| Client → Server  | Control    | Handshake, auth, ping, subscribe/unsubscribe       |
-| Server → Client  | Snapshot   | Authoritative state for entities in view           |
-| Server → Client  | Delta      | Incremental changes since the last snapshot        |
-| Server → Client  | Event      | Discrete notifications (chat, rewards, results)     |
+| Direction       | Type     | Purpose                                         |
+| --------------- | -------- | ----------------------------------------------- |
+| Client → Server | Intent   | Move, use skill, build, gather, trade, etc.     |
+| Client → Server | Control  | Handshake, auth, ping, subscribe/unsubscribe    |
+| Server → Client | Snapshot | Authoritative state for entities in view        |
+| Server → Client | Delta    | Incremental changes since the last snapshot     |
+| Server → Client | Event    | Discrete notifications (chat, rewards, results) |
 
 The protocol is defined and versioned in `shared/src/protocol`, and every inbound message is
 validated with Zod at the boundary before processing.

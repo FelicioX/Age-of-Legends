@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Propose a new feature or system
-title: "[Feature] "
+title: '[Feature] '
 labels: feature
 ---
 
