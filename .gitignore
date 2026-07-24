@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Caches
+.turbo/
+.cache/
+.vite/
+coverage/
+.eslintcache
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# Temporary
+temp/
+tmp/
+*.tmp
+
+# Database local data
+database/backups/*
+!database/backups/.gitkeep
+pgdata/
+redisdata/
+
+# Assets pipeline (large binaries tracked via LFS where applicable)
+assets/**/*.psd
+assets/**/*.blend
+
+# Test artifacts
+playwright-report/
+test-results/

@@ -1,0 +1,30 @@
+{
+  "name": "@aol/game",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The rules of Age of Legends: domain components, systems and content definitions.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsc --build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@aol/shared": "workspace:*",
+    "@aol/engine": "workspace:*"
+  }
+}

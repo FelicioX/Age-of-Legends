@@ -1,0 +1,13 @@
+# Default owner for everything in the repository.
+* @FelicioX
+
+# Documentation
+/docs/ @FelicioX
+/reference/ @FelicioX
+
+# Packages
+/shared/ @FelicioX
+/engine/ @FelicioX
+/game/ @FelicioX
+/server/ @FelicioX
+/client/ @FelicioX
