@@ -73,6 +73,8 @@
         attempts: { day: null, used: 0 },
         ladderSeed: (seed ^ 0x51ed) >>> 0,
       },
+      guild: { coins: 0, contribution: 0, tech: {}, lastDonate: null },
+      achievements: { claimed: {} },
       clock: 0,
       day: 1,
       lastTs: Date.now(),
@@ -210,8 +212,24 @@
     return parts.join(' ');
   }
 
-  // Hero stats including equipped gear (star bonus is already folded into
-  // AOL.heroStats). Formation and synergy multipliers apply on top of this.
+  // Guild technology bonus for a stat ('atk' | 'hp' | 'gold'), as a multiplier.
+  function guildTechLevel(id) {
+    return (state.guild && state.guild.tech && state.guild.tech[id]) || 0;
+  }
+  function guildMult(stat) {
+    var m = 1;
+    AOL.GUILD_TECHS.forEach(function (t) {
+      if (t.stat === stat) m += t.per * guildTechLevel(t.id);
+    });
+    return m;
+  }
+  // Production multiplier for a resource (guild Prosperity boosts gold).
+  function prodMult(res) {
+    return res === 'gold' ? guildMult('gold') : 1;
+  }
+
+  // Hero stats including equipped gear and guild tech (star bonus is already
+  // folded into AOL.heroStats). Formation and synergy multipliers apply on top.
   function fullStats(h) {
     var base = AOL.heroStats(h);
     var addHp = 0,
@@ -226,8 +244,8 @@
       else if (slot.stat === 'spd') addSpd += v;
       else addAtk += v;
     });
-    var hp = base.hp + addHp;
-    var atk = base.atk + addAtk;
+    var hp = Math.round((base.hp + addHp) * guildMult('hp'));
+    var atk = Math.round((base.atk + addAtk) * guildMult('atk'));
     var spd = base.spd + addSpd;
     return {
       hp: hp,
@@ -364,7 +382,9 @@
     AOL.LAYOUT.forEach(function (item) {
       var b = state.buildings[item.type];
       var def = AOL.BUILDINGS[item.type];
-      if (def.produce) state.resources[def.produce.res] += def.produce.rate * b.level * dt;
+      if (def.produce)
+        state.resources[def.produce.res] +=
+          def.produce.rate * b.level * dt * prodMult(def.produce.res);
     });
     // Stamina regen.
     state.staminaTimer += dt;
@@ -409,7 +429,7 @@
       var b = state.buildings[item.type];
       var def = AOL.BUILDINGS[item.type];
       if (def.produce) {
-        var amt = def.produce.rate * b.level * elapsed;
+        var amt = def.produce.rate * b.level * elapsed * prodMult(def.produce.res);
         state.resources[def.produce.res] += amt;
         gained[def.produce.res] = (gained[def.produce.res] || 0) + amt;
       }
@@ -432,6 +452,7 @@
       'campaignBody',
       'dailyBody',
       'arenaBody',
+      'guildBody',
       'buildQueue',
       'ftue',
       'toasts',
@@ -451,7 +472,7 @@
       AOL.LAYOUT.forEach(function (item) {
         var def = AOL.BUILDINGS[item.type];
         if (def.produce && def.produce.res === k)
-          rate += def.produce.rate * state.buildings[item.type].level;
+          rate += def.produce.rate * state.buildings[item.type].level * prodMult(k);
       });
       html +=
         '<div class="chip gold" title="' +
@@ -1838,6 +1859,299 @@
     });
   }
 
+  // -------------------------------------------------------- guild / social ---
+  var guildTab = 'guild';
+  function achMetric(metric) {
+    switch (metric) {
+      case 'stage':
+        return state.campaignStage;
+      case 'castle':
+        return state.buildings.castle.level;
+      case 'heroes':
+        return state.heroes.filter(function (h) {
+          return h.owned;
+        }).length;
+      case 'maxStars':
+        return state.heroes.reduce(function (m, h) {
+          return Math.max(m, h.stars || 0);
+        }, 0);
+      case 'summons':
+        return state.gacha.total;
+      case 'arenaWins':
+        return state.arena.wins;
+      case 'gearCount':
+        var equipped = 0;
+        state.heroes.forEach(function (h) {
+          if (h.gear)
+            Object.keys(h.gear).forEach(function (k) {
+              if (h.gear[k]) equipped++;
+            });
+        });
+        return state.inventory.length + equipped;
+      default:
+        return 0;
+    }
+  }
+  function guildDonate(id) {
+    var d = AOL.GUILD_DONATIONS.find(function (x) {
+      return x.id === id;
+    });
+    if (!d) return;
+    var today = AOL.dayKey();
+    var used =
+      (state.guild.lastDonate && state.guild.lastDonate.day) === today
+        ? state.guild.lastDonate.count || 0
+        : 0;
+    if (used >= 2) {
+      toast('Daily donations already used.', 'bad');
+      return;
+    }
+    var canPay = Object.keys(d.cost).every(function (k) {
+      return k === 'gems' ? state.gems >= d.cost[k] : state.resources[k] >= d.cost[k];
+    });
+    if (!canPay) {
+      toast('Not enough to donate.', 'bad');
+      return;
+    }
+    Object.keys(d.cost).forEach(function (k) {
+      if (k === 'gems') state.gems -= d.cost[k];
+      else state.resources[k] -= d.cost[k];
+    });
+    state.guild.coins += d.coins;
+    state.guild.contribution += d.contrib;
+    state.guild.lastDonate = { day: today, count: used + 1 };
+    AOL.Audio.sfx('click');
+    toast('Donated! +' + d.coins + ' guild coins', 'gold');
+    refreshHud();
+    renderGuild();
+    save();
+  }
+  function guildTechUp(id) {
+    var tech = AOL.GUILD_TECHS.find(function (t) {
+      return t.id === id;
+    });
+    var lvl = guildTechLevel(id);
+    if (lvl >= tech.max) {
+      toast('Tech at max level.', 'bad');
+      return;
+    }
+    var cost = AOL.guildTechCost(tech, lvl);
+    if (state.guild.coins < cost) {
+      toast('Not enough guild coins.', 'bad');
+      return;
+    }
+    state.guild.coins -= cost;
+    state.guild.tech[id] = lvl + 1;
+    AOL.Audio.sfx('ultimate');
+    toast(tech.name + ' upgraded to Lv ' + (lvl + 1) + '!', 'gold');
+    refreshHud();
+    renderGuild();
+    save();
+  }
+  function guildShopBuy(id) {
+    var it = AOL.GUILD_SHOP.find(function (x) {
+      return x.id === id;
+    });
+    if (!it) return;
+    if (state.guild.coins < it.coins) {
+      toast('Not enough guild coins.', 'bad');
+      return;
+    }
+    state.guild.coins -= it.coins;
+    grantReward(it.reward);
+    AOL.Audio.sfx('victory');
+    toast('Bought ' + it.name + ': ' + rewardText(it.reward), 'gold');
+    refreshHud();
+    renderGuild();
+    save();
+  }
+  function claimAchievement(id) {
+    var a = AOL.ACHIEVEMENTS.find(function (x) {
+      return x.id === id;
+    });
+    if (!a || state.achievements.claimed[id]) return;
+    if (achMetric(a.metric) < a.goal) return;
+    state.achievements.claimed[id] = true;
+    grantReward(a.reward);
+    AOL.Audio.sfx('victory');
+    toast('Achievement: ' + a.name + ' · ' + rewardText(a.reward), 'gold');
+    refreshHud();
+    renderGuild();
+    save();
+  }
+  function renderGuild() {
+    if (!el.guildBody) return;
+    var html =
+      '<div class="tabs">' +
+      '<button class="tab' +
+      (guildTab === 'guild' ? ' on' : '') +
+      '" data-gtab="guild">Guild</button>' +
+      '<button class="tab' +
+      (guildTab === 'ach' ? ' on' : '') +
+      '" data-gtab="ach">Achievements</button></div>';
+
+    if (guildTab === 'guild') {
+      var g = state.guild;
+      html +=
+        '<div class="guild-head"><div><h3 style="margin:0">' +
+        AOL.GUILD_NAME +
+        '</h3><div class="muted" style="font-size:0.74rem">Contribution ' +
+        g.contribution +
+        ' · 🪙 ' +
+        g.coins +
+        ' guild coins</div></div></div>';
+      // Donations
+      html += '<div class="view-sub">Daily donation</div><div class="modal-actions">';
+      AOL.GUILD_DONATIONS.forEach(function (d) {
+        var costTxt = Object.keys(d.cost)
+          .map(function (k) {
+            return (k === 'gems' ? '💎' : AOL.RES_ICON[k]) + d.cost[k];
+          })
+          .join(' ');
+        html +=
+          '<button class="btn" data-donate="' +
+          d.id +
+          '">' +
+          d.label +
+          ' (' +
+          costTxt +
+          ')</button>';
+      });
+      html += '</div>';
+      // Tech
+      html += '<div class="view-sub">Guild technology</div><div class="tech-list">';
+      AOL.GUILD_TECHS.forEach(function (t) {
+        var lvl = guildTechLevel(t.id);
+        var maxed = lvl >= t.max;
+        var cost = maxed ? 0 : AOL.guildTechCost(t, lvl);
+        var effect =
+          t.stat === 'gold'
+            ? '+' + Math.round(t.per * lvl * 100) + '% gold'
+            : '+' + Math.round(t.per * lvl * 100) + '% ' + t.stat.toUpperCase();
+        html +=
+          '<div class="tech-row"><div class="tech-info"><div class="tech-name">' +
+          t.icon +
+          ' ' +
+          t.name +
+          ' <span class="muted">Lv ' +
+          lvl +
+          '/' +
+          t.max +
+          '</span></div><div class="muted" style="font-size:0.72rem">' +
+          effect +
+          '</div></div>' +
+          '<button class="btn ' +
+          (!maxed && state.guild.coins >= cost ? 'gold' : '') +
+          '" data-tech="' +
+          t.id +
+          '" ' +
+          (maxed ? 'disabled' : '') +
+          '>' +
+          (maxed ? 'Max' : '🪙' + cost) +
+          '</button></div>';
+      });
+      html += '</div>';
+      // Guild shop
+      html += '<div class="view-sub">Guild shop</div><div class="tech-list">';
+      AOL.GUILD_SHOP.forEach(function (it) {
+        html +=
+          '<div class="tech-row"><div class="tech-info"><div class="tech-name">' +
+          it.icon +
+          ' ' +
+          it.name +
+          '</div><div class="muted" style="font-size:0.72rem">' +
+          rewardText(it.reward) +
+          '</div></div>' +
+          '<button class="btn ' +
+          (state.guild.coins >= it.coins ? 'green' : '') +
+          '" data-gshop="' +
+          it.id +
+          '">🪙' +
+          it.coins +
+          '</button></div>';
+      });
+      html += '</div>';
+      // Members
+      html +=
+        '<div class="view-sub">Members (' +
+        AOL.GUILD_MEMBERS.length +
+        ')</div><div class="member-list">';
+      html += AOL.GUILD_MEMBERS.map(function (m) {
+        return (
+          '<div class="member' +
+          (m.you ? ' you' : '') +
+          '">' +
+          (m.you ? '⭐ ' : '👤 ') +
+          m.name +
+          '</div>'
+        );
+      }).join('');
+      html += '</div>';
+    } else {
+      html += '<div class="ach-list">';
+      AOL.ACHIEVEMENTS.forEach(function (a) {
+        var cur = Math.min(a.goal, achMetric(a.metric));
+        var done = cur >= a.goal;
+        var claimed = state.achievements.claimed[a.id];
+        html +=
+          '<div class="ach-row' +
+          (claimed ? ' claimed' : '') +
+          '"><div class="ach-info"><div class="ach-name">' +
+          (claimed ? '✅ ' : done ? '⭐ ' : '') +
+          a.name +
+          '</div><div class="muted" style="font-size:0.74rem">' +
+          a.desc +
+          '</div><div class="mission-bar"><span style="width:' +
+          Math.round((cur / a.goal) * 100) +
+          '%"></span></div><div class="mission-meta">' +
+          cur +
+          '/' +
+          a.goal +
+          ' · ' +
+          rewardText(a.reward) +
+          '</div></div>' +
+          '<button class="btn ' +
+          (done && !claimed ? 'green' : '') +
+          '" data-ach="' +
+          a.id +
+          '" ' +
+          (done && !claimed ? '' : 'disabled') +
+          '>' +
+          (claimed ? '✓' : 'Claim') +
+          '</button></div>';
+      });
+      html += '</div>';
+    }
+
+    el.guildBody.innerHTML = html;
+    el.guildBody.querySelectorAll('[data-gtab]').forEach(function (b) {
+      b.onclick = function () {
+        guildTab = b.getAttribute('data-gtab');
+        renderGuild();
+      };
+    });
+    el.guildBody.querySelectorAll('[data-donate]').forEach(function (b) {
+      b.onclick = function () {
+        guildDonate(b.getAttribute('data-donate'));
+      };
+    });
+    el.guildBody.querySelectorAll('[data-tech]').forEach(function (b) {
+      b.onclick = function () {
+        guildTechUp(b.getAttribute('data-tech'));
+      };
+    });
+    el.guildBody.querySelectorAll('[data-gshop]').forEach(function (b) {
+      b.onclick = function () {
+        guildShopBuy(b.getAttribute('data-gshop'));
+      };
+    });
+    el.guildBody.querySelectorAll('[data-ach]').forEach(function (b) {
+      b.onclick = function () {
+        claimAchievement(b.getAttribute('data-ach'));
+      };
+    });
+  }
+
   // ----------------------------------------------------------- dailies ---
   // Reset missions when the calendar day rolls over. Login availability is
   // derived from login.claimedDay vs today.
@@ -2050,6 +2364,7 @@
     if (v === 'campaign') renderCampaign();
     if (v === 'daily') renderDaily();
     if (v === 'arena') renderArena();
+    if (v === 'guild') renderGuild();
     if (v === 'kingdom') AOL.Kingdom.resize();
   }
 
@@ -2158,6 +2473,8 @@
         attempts: { day: null, used: 0 },
         ladderSeed: (state.seed ^ 0x51ed) >>> 0,
       };
+    if (!state.guild) state.guild = { coins: 0, contribution: 0, tech: {}, lastDonate: null };
+    if (!state.achievements) state.achievements = { claimed: {} };
     state.heroes.forEach(function (h) {
       if (h.stars == null) h.stars = AOL.baseStars(h.rarity);
       if (!h.gear) h.gear = {};

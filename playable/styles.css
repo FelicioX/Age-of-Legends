@@ -1431,6 +1431,99 @@ body {
   flex: 0 0 auto;
 }
 
+/* ---------- Tabs, guild & achievements ---------- */
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+.tab {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--edge);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+.tab.on {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(240, 196, 25, 0.06);
+}
+.guild-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--edge-2);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  background: linear-gradient(120deg, #22305a, #17203a);
+}
+.tech-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+}
+.tech-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+.tech-info {
+  flex: 1;
+}
+.tech-name {
+  font-weight: 600;
+  font-size: 0.86rem;
+}
+.member-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+}
+.member {
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+.member.you {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.ach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ach-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+.ach-row.claimed {
+  opacity: 0.55;
+}
+.ach-info {
+  flex: 1;
+}
+.ach-name {
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
 /* ---------- FTUE (onboarding) ---------- */
 .ftue {
   position: fixed;

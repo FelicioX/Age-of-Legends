@@ -830,6 +830,114 @@ window.AOL = window.AOL || {};
   ];
   AOL.ACTIVITY_MAX = 100;
 
+  // --- Guild (local / simulated) ------------------------------------------
+  AOL.GUILD_NAME = 'Ironvale Vanguard';
+  AOL.GUILD_MEMBERS = [
+    { name: 'You', you: true },
+    { name: 'Ysolde Fenn' },
+    { name: 'Ferran Wolfe' },
+    { name: 'Orin Duskblade' },
+    { name: 'Mira Thorne' },
+    { name: 'Bastian Vale' },
+    { name: 'Sela Nightwind' },
+    { name: 'Teodor Kane' },
+  ];
+  // Guild technologies grant account-wide bonuses; leveled with guild coins.
+  AOL.GUILD_TECHS = [
+    { id: 'might', name: 'Might', icon: '⚔️', stat: 'atk', per: 0.03, max: 10, baseCost: 40 },
+    { id: 'vigor', name: 'Vigor', icon: '❤️', stat: 'hp', per: 0.03, max: 10, baseCost: 40 },
+    {
+      id: 'prosperity',
+      name: 'Prosperity',
+      icon: '🪙',
+      stat: 'gold',
+      per: 0.05,
+      max: 10,
+      baseCost: 30,
+    },
+  ];
+  AOL.guildTechCost = function (tech, level) {
+    return Math.round(tech.baseCost * (level + 1));
+  };
+  AOL.GUILD_DONATIONS = [
+    { id: 'gold', label: 'Donate Gold', cost: { gold: 500 }, coins: 20, contrib: 10 },
+    { id: 'gems', label: 'Donate Gems', cost: { gems: 20 }, coins: 60, contrib: 30 },
+  ];
+  AOL.GUILD_SHOP = [
+    { id: 'gs_gems', name: 'Gem Cache', icon: '💎', coins: 120, reward: { gems: 80 } },
+    { id: 'gs_gold', name: 'Gold Crate', icon: '🪙', coins: 60, reward: { gold: 3000 } },
+    { id: 'gs_xp', name: 'Tome of Valor', icon: '✨', coins: 80, reward: { heroXp: 800 } },
+  ];
+
+  // --- Achievements --------------------------------------------------------
+  // `metric` is computed from game state in game.js; goal completes it.
+  AOL.ACHIEVEMENTS = [
+    {
+      id: 'a_stage',
+      metric: 'stage',
+      goal: 5,
+      name: 'Trailblazer',
+      desc: 'Reach campaign stage 5',
+      reward: { gems: 40 },
+    },
+    {
+      id: 'a_stage10',
+      metric: 'stage',
+      goal: 10,
+      name: 'Marchwarden',
+      desc: 'Reach campaign stage 10',
+      reward: { gems: 60 },
+    },
+    {
+      id: 'a_castle',
+      metric: 'castle',
+      goal: 5,
+      name: 'City Builder',
+      desc: 'Raise the Castle to Lv 5',
+      reward: { gems: 40 },
+    },
+    {
+      id: 'a_heroes',
+      metric: 'heroes',
+      goal: 8,
+      name: 'Legion',
+      desc: 'Recruit 8 heroes',
+      reward: { gems: 50 },
+    },
+    {
+      id: 'a_stars',
+      metric: 'maxStars',
+      goal: 4,
+      name: 'Ascendant',
+      desc: 'Ascend a hero to 4★',
+      reward: { gems: 50 },
+    },
+    {
+      id: 'a_summons',
+      metric: 'summons',
+      goal: 20,
+      name: 'Fatebound',
+      desc: 'Summon 20 times',
+      reward: { gems: 60 },
+    },
+    {
+      id: 'a_arena',
+      metric: 'arenaWins',
+      goal: 10,
+      name: 'Gladiator',
+      desc: 'Win 10 arena battles',
+      reward: { gems: 60 },
+    },
+    {
+      id: 'a_gear',
+      metric: 'gearCount',
+      goal: 6,
+      name: 'Quartermaster',
+      desc: 'Collect 6 pieces of gear',
+      reward: { gems: 40 },
+    },
+  ];
+
   // --- Arena (asynchronous PvP vs AI) -------------------------------------
   AOL.ARENA_LEAGUES = [
     { key: 'bronze', name: 'Bronze', min: 0, icon: '🥉', color: '#cd7f32' },
