@@ -830,6 +830,92 @@ window.AOL = window.AOL || {};
   ];
   AOL.ACTIVITY_MAX = 100;
 
+  // --- Arena (asynchronous PvP vs AI) -------------------------------------
+  AOL.ARENA_LEAGUES = [
+    { key: 'bronze', name: 'Bronze', min: 0, icon: '🥉', color: '#cd7f32' },
+    { key: 'silver', name: 'Silver', min: 1100, icon: '🥈', color: '#c0c0c0' },
+    { key: 'gold', name: 'Gold', min: 1300, icon: '🥇', color: '#ffd54a' },
+    { key: 'platinum', name: 'Platinum', min: 1600, icon: '💠', color: '#5fd0ff' },
+    { key: 'diamond', name: 'Diamond', min: 2000, icon: '💎', color: '#8a7bff' },
+  ];
+  AOL.arenaLeague = function (rating) {
+    var out = AOL.ARENA_LEAGUES[0];
+    for (var i = 0; i < AOL.ARENA_LEAGUES.length; i++) {
+      if (rating >= AOL.ARENA_LEAGUES[i].min) out = AOL.ARENA_LEAGUES[i];
+    }
+    return out;
+  };
+  AOL.ARENA_ATTEMPTS_MAX = 5;
+  AOL.ARENA_OPP_NAMES = [
+    'Vexmyr the Bold',
+    'Kaldra Stormcaller',
+    'Rook Ashvale',
+    'Sela Nightwind',
+    'Grimm Hollow',
+    'Ysolde Fenn',
+    'Bastian Vale',
+    'Orin Duskblade',
+    'Mira Thorne',
+    'Ferran Wolfe',
+    'Alba Ríos',
+    'Teodor Kane',
+  ];
+  AOL.ARENA_ROLES = ['tank', 'dps', 'mage', 'healer', 'support'];
+  AOL.ARENA_ROLE_EMOJI = { tank: '🛡️', dps: '🏹', mage: '🔥', healer: '✨', support: '⚙️' };
+  // Build an opponent defense team whose total power tracks a target rating.
+  AOL.makeArenaTeam = function (rng, targetRating) {
+    var lvl = Math.max(1, Math.round(targetRating / 120));
+    var base = { tank: [300, 24], dps: [175, 42], mage: [165, 38], healer: [195, 23] };
+    var team = [];
+    var count = 5;
+    for (var i = 0; i < count; i++) {
+      var role = i === 0 ? 'tank' : rng.pick(['dps', 'dps', 'mage', 'healer', 'tank']);
+      var b = base[role] || base.dps;
+      var lvlScale = 1 + 0.14 * (lvl - 1);
+      var hp = Math.round(b[0] * lvlScale);
+      var atk = Math.round(b[1] * lvlScale);
+      var spd = 8 + rng.range(0, 5);
+      team.push({
+        name: AOL.ARENA_ROLE_EMOJI[role] + ' Lv' + lvl,
+        emoji: AOL.ARENA_ROLE_EMOJI[role],
+        role: role,
+        maxHp: hp,
+        hp: hp,
+        atk: atk,
+        spd: spd,
+        enemy: true,
+        alive: true,
+      });
+    }
+    return team;
+  };
+  AOL.arenaTeamPower = function (team) {
+    return team.reduce(function (s, u) {
+      return s + AOL.powerFrom(u.maxHp, u.atk, u.spd);
+    }, 0);
+  };
+  // Generate a seeded ladder of opponents bracketed around the player's rating.
+  AOL.makeArenaLadder = function (seed, playerRating) {
+    var rng = new AOL.Rng(seed >>> 0);
+    var list = [];
+    var offsets = [90, 45, 12, -35, -80];
+    for (var i = 0; i < 5; i++) {
+      var rating = Math.max(800, playerRating + offsets[i] + rng.range(-15, 15));
+      var team = AOL.makeArenaTeam(rng, rating);
+      list.push({
+        name: AOL.ARENA_OPP_NAMES[rng.range(0, AOL.ARENA_OPP_NAMES.length - 1)],
+        rating: rating,
+        power: AOL.arenaTeamPower(team),
+        team: team,
+      });
+    }
+    return list;
+  };
+  AOL.arenaReward = function (win, rating) {
+    if (!win) return { gems: 2 };
+    return { gems: 10 + Math.floor(rating / 150) };
+  };
+
   AOL.fmt = function (n) {
     n = Math.floor(n);
     if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';

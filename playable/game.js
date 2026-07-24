@@ -65,6 +65,14 @@
       gacha: { sinceEpic: 0, sinceLeg: 0, total: 0 },
       shards: {},
       inventory: [],
+      arena: {
+        rating: 1000,
+        best: 1000,
+        wins: 0,
+        losses: 0,
+        attempts: { day: null, used: 0 },
+        ladderSeed: (seed ^ 0x51ed) >>> 0,
+      },
       clock: 0,
       day: 1,
       lastTs: Date.now(),
@@ -423,6 +431,7 @@
       'heroGrid',
       'campaignBody',
       'dailyBody',
+      'arenaBody',
       'buildQueue',
       'ftue',
       'toasts',
@@ -1585,19 +1594,11 @@
     save();
   }
 
-  // ----------------------------------------------------------- auto-battle ---
-  function startBattle() {
-    if (state.party.length === 0) return;
-    if (state.stamina < 6) {
-      toast('Not enough stamina.', 'bad');
-      return;
-    }
-    state.stamina -= 6;
-    refreshHud();
-
-    var brng = new AOL.Rng(state.seed + state.campaignStage * 131 + Date.now());
+  // Build the player's battle units from the current party (stats + formation
+  // + synergy + barracks bonus). Shared by campaign and arena.
+  function partyUnits(brng) {
     var syn = currentSynergy();
-    var allies = state.party.map(function (id) {
+    return state.party.map(function (id) {
       var h = hero(id);
       var line = heroLine(id);
       var st = AOL.applySynergy(h, syn, AOL.applyFormation(line, fullStats(h)));
@@ -1616,6 +1617,20 @@
         charge: brng.range(0, 60),
       };
     });
+  }
+
+  // ----------------------------------------------------------- auto-battle ---
+  function startBattle() {
+    if (state.party.length === 0) return;
+    if (state.stamina < 6) {
+      toast('Not enough stamina.', 'bad');
+      return;
+    }
+    state.stamina -= 6;
+    refreshHud();
+
+    var brng = new AOL.Rng(state.seed + state.campaignStage * 131 + Date.now());
+    var allies = partyUnits(brng);
     var enemies = AOL.makeEnemyTeam(state.campaignStage, brng).map(function (e) {
       e.side = 'enemy';
       e.charge = brng.range(0, 60);
@@ -1678,6 +1693,148 @@
         h.level++;
         need = 50 + h.level * 40;
       }
+    });
+  }
+
+  // -------------------------------------------------------------- arena ---
+  function arenaAttemptsLeft() {
+    var today = AOL.dayKey();
+    if (state.arena.attempts.day !== today) {
+      state.arena.attempts.day = today;
+      state.arena.attempts.used = 0;
+    }
+    return AOL.ARENA_ATTEMPTS_MAX - state.arena.attempts.used;
+  }
+  function arenaLadder() {
+    return AOL.makeArenaLadder(state.arena.ladderSeed, state.arena.rating);
+  }
+  function renderArena() {
+    if (!el.arenaBody) return;
+    var a = state.arena;
+    var league = AOL.arenaLeague(a.rating);
+    var left = arenaAttemptsLeft();
+    var html = '';
+    html +=
+      '<div class="arena-banner" style="border-color:' +
+      league.color +
+      '">' +
+      '<div class="arena-league" style="color:' +
+      league.color +
+      '"><div class="al-ico">' +
+      league.icon +
+      '</div><div class="al-name">' +
+      league.name +
+      '</div></div>' +
+      '<div class="arena-rating"><div class="ar-val">' +
+      a.rating +
+      '</div><div class="muted" style="font-size:0.72rem">Rating · best ' +
+      a.best +
+      '</div></div>' +
+      '<div class="arena-record"><div>🏅 ' +
+      a.wins +
+      'W / ' +
+      a.losses +
+      'L</div><div class="muted" style="font-size:0.72rem">⚔️ ' +
+      left +
+      '/' +
+      AOL.ARENA_ATTEMPTS_MAX +
+      ' attempts</div></div>' +
+      '</div>';
+    html +=
+      '<div class="muted" style="font-size:0.78rem;margin:0.3rem 0">Defeat opponents above you to climb. Attempts reset daily. Your power: ' +
+      AOL.fmt(partyPower()) +
+      '</div>';
+
+    html += '<div class="arena-list">';
+    var ladder = arenaLadder();
+    ladder.forEach(function (opp, i) {
+      var stronger = opp.rating >= a.rating;
+      html +=
+        '<div class="arena-opp">' +
+        '<div class="ao-rank">#' +
+        (i + 1) +
+        '</div>' +
+        '<div class="ao-info"><div class="ao-name">' +
+        opp.name +
+        '</div>' +
+        '<div class="muted" style="font-size:0.72rem">' +
+        AOL.arenaLeague(opp.rating).icon +
+        ' ' +
+        opp.rating +
+        ' · ⚔️ ' +
+        AOL.fmt(opp.power) +
+        '</div></div>' +
+        '<button class="btn ' +
+        (left > 0 && state.party.length ? (stronger ? 'gold' : 'green') : '') +
+        '" data-arena="' +
+        i +
+        '" ' +
+        (left > 0 && state.party.length ? '' : 'disabled') +
+        '>Fight</button>' +
+        '</div>';
+    });
+    html += '</div>';
+    if (!state.party.length)
+      html +=
+        '<div class="muted" style="font-size:0.78rem;text-align:center">Add heroes to your party to fight.</div>';
+
+    el.arenaBody.innerHTML = html;
+    el.arenaBody.querySelectorAll('[data-arena]').forEach(function (btn) {
+      btn.onclick = function () {
+        arenaFight(parseInt(btn.getAttribute('data-arena'), 10));
+      };
+    });
+  }
+  function arenaFight(idx) {
+    if (arenaAttemptsLeft() <= 0) {
+      toast('No arena attempts left today.', 'bad');
+      return;
+    }
+    if (!state.party.length) {
+      toast('Add heroes to your party first.', 'bad');
+      return;
+    }
+    var opp = arenaLadder()[idx];
+    if (!opp) return;
+    state.arena.attempts.used++;
+    var brng = new AOL.Rng((state.seed ^ Math.imul(idx + 1, 2246822519) ^ Date.now()) >>> 0);
+    var allies = partyUnits(brng);
+    var enemies = opp.team.map(function (u) {
+      var c = Object.assign({}, u);
+      c.side = 'enemy';
+      c.hp = c.maxHp;
+      c.alive = true;
+      c.charge = brng.range(0, 60);
+      return c;
+    });
+    AOL.Battle.start({
+      overlay: el.battle,
+      stage: 'Arena',
+      allies: allies,
+      enemies: enemies,
+      rewardText: '🏆 ' + opp.name + ' · ' + opp.rating,
+      onEnd: function (result) {
+        var a = state.arena;
+        var reward = AOL.arenaReward(result.win, a.rating);
+        var delta;
+        if (result.win) {
+          delta = Math.round(12 + Math.max(0, opp.rating - a.rating) / 5);
+          a.rating += delta;
+          a.wins++;
+          if (a.rating > a.best) a.best = a.rating;
+          toast('Arena win! +' + delta + ' rating · 💎' + reward.gems, 'good');
+        } else {
+          delta = Math.round(8 + Math.max(0, a.rating - opp.rating) / 8);
+          a.rating = Math.max(800, a.rating - delta);
+          a.losses++;
+          toast('Arena loss. −' + delta + ' rating.', 'bad');
+        }
+        grantReward(reward);
+        a.ladderSeed = (a.ladderSeed * 1664525 + 1013904223) >>> 0; // reshuffle
+        refreshHud();
+        renderArena();
+        save();
+      },
     });
   }
 
@@ -1892,6 +2049,7 @@
     if (v === 'heroes') renderHeroes();
     if (v === 'campaign') renderCampaign();
     if (v === 'daily') renderDaily();
+    if (v === 'arena') renderArena();
     if (v === 'kingdom') AOL.Kingdom.resize();
   }
 
@@ -1991,6 +2149,15 @@
     if (!state.gacha) state.gacha = { sinceEpic: 0, sinceLeg: 0, total: 0 };
     if (!state.shards) state.shards = {};
     if (!state.inventory) state.inventory = [];
+    if (!state.arena)
+      state.arena = {
+        rating: 1000,
+        best: 1000,
+        wins: 0,
+        losses: 0,
+        attempts: { day: null, used: 0 },
+        ladderSeed: (state.seed ^ 0x51ed) >>> 0,
+      };
     state.heroes.forEach(function (h) {
       if (h.stars == null) h.stars = AOL.baseStars(h.rarity);
       if (!h.gear) h.gear = {};
@@ -2198,12 +2365,14 @@
       },
     });
 
-    // Nav
-    document.querySelectorAll('.nav-btn[data-view]').forEach(function (b) {
-      b.onclick = function () {
-        switchView(b.getAttribute('data-view'));
-      };
-    });
+    // Nav + feature rail + back buttons all use data-view.
+    document
+      .querySelectorAll('.nav-btn[data-view], .feat-btn[data-view], .back-btn[data-view]')
+      .forEach(function (b) {
+        b.onclick = function () {
+          switchView(b.getAttribute('data-view'));
+        };
+      });
     document.getElementById('menuBtn').onclick = function () {
       el.menu.classList.remove('hidden');
     };
