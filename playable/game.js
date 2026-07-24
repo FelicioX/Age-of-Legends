@@ -534,7 +534,6 @@
   }
 
   // ----------------------------------------------------------- auto-battle ---
-  var battleTimer = null;
   function startBattle() {
     if (state.party.length === 0) return;
     if (state.stamina < 6) {
@@ -568,238 +567,36 @@
       return e;
     });
 
-    renderBattle(allies, enemies);
-    el.battle.classList.remove('hidden');
+    var reward = AOL.stageReward(state.campaignStage);
+    var rewardText =
+      AOL.RES_ICON.gold +
+      ' ' +
+      reward.gold +
+      '   💎 ' +
+      reward.gems +
+      '   ✨ ' +
+      reward.heroXp +
+      ' XP';
 
-    var log = document.getElementById('battleLog');
-    battleTimer = setInterval(function () {
-      battleTick(allies, enemies, brng, log);
-      var aliveA = allies.some(function (u) {
-        return u.alive;
-      });
-      var aliveE = enemies.some(function (u) {
-        return u.alive;
-      });
-      if (!aliveA || !aliveE) {
-        clearInterval(battleTimer);
-        battleTimer = null;
-        endBattle(aliveA);
-      }
-    }, 520);
-  }
-
-  function battleTick(allies, enemies, brng, log) {
-    var all = allies.concat(enemies);
-    all.forEach(function (u) {
-      if (u.alive) u.charge += u.spd;
-    });
-    var actors = all
-      .filter(function (u) {
-        return u.alive && u.charge >= 100;
-      })
-      .sort(function (a, b) {
-        return b.charge - a.charge;
-      });
-    actors.forEach(function (u) {
-      if (!u.alive) return;
-      u.charge -= 100;
-      var friends = u.side === 'ally' ? allies : enemies;
-      var foes = u.side === 'ally' ? enemies : allies;
-      var liveFoes = foes.filter(function (x) {
-        return x.alive;
-      });
-      if (liveFoes.length === 0) return;
-
-      if (u.role === 'healer') {
-        var hurt = friends
-          .filter(function (x) {
-            return x.alive;
-          })
-          .sort(function (a, b) {
-            return a.hp / a.maxHp - b.hp / b.maxHp;
-          })[0];
-        if (hurt && hurt.hp < hurt.maxHp) {
-          var heal = Math.round(u.atk * 1.6);
-          hurt.hp = Math.min(hurt.maxHp, hurt.hp + heal);
-          floatDmg(hurt, '+' + heal, 'heal');
-          lunge(u);
-          updateHp(hurt);
-          if (log) log.textContent = u.name + ' heals ' + hurt.name + ' for ' + heal;
-          return;
+    AOL.Battle.start({
+      overlay: el.battle,
+      stage: state.campaignStage,
+      allies: allies,
+      enemies: enemies,
+      rewardText: rewardText,
+      onEnd: function (result) {
+        if (result.win) {
+          state.resources.gold += reward.gold;
+          state.gems += reward.gems;
+          grantHeroXp(reward.heroXp);
+          state.campaignStage++;
+          toast('Victory! Stage ' + (state.campaignStage - 1) + ' cleared.', 'good');
         }
-      }
-      if (u.role === 'mage') {
-        var dmgAll = Math.round(u.atk * 0.6);
-        liveFoes.forEach(function (f) {
-          hit(f, dmgAll, false);
-        });
-        lunge(u);
-        if (log) log.textContent = u.name + ' unleashes a spell on all foes!';
-        return;
-      }
-      // Focus lowest-hp foe.
-      var target = liveFoes.sort(function (a, b) {
-        return a.hp - b.hp;
-      })[0];
-      var crit = brng.float() < 0.2;
-      var dmg = Math.round(u.atk * (crit ? 1.9 : 1) * (0.85 + brng.float() * 0.3));
-      hit(target, dmg, crit);
-      lunge(u);
-      if (log)
-        log.textContent =
-          u.name + ' strikes ' + target.name + ' for ' + dmg + (crit ? ' (CRIT!)' : '');
+        refreshHud();
+        renderCampaign();
+        save();
+      },
     });
-  }
-
-  function hit(unit, dmg, crit) {
-    unit.hp -= dmg;
-    floatDmg(unit, '-' + dmg, crit ? 'crit' : '');
-    var elu = unitEl(unit);
-    if (elu) {
-      elu.classList.add('hit');
-      setTimeout(function () {
-        elu.classList.remove('hit');
-      }, 180);
-    }
-    if (unit.hp <= 0) {
-      unit.hp = 0;
-      unit.alive = false;
-      if (elu) elu.classList.add('dead');
-    }
-    updateHp(unit);
-  }
-  function lunge(u) {
-    var elu = unitEl(u);
-    if (!elu) return;
-    var cls = u.side === 'ally' ? 'lunge-r' : 'lunge-l';
-    elu.classList.add(cls);
-    setTimeout(function () {
-      elu.classList.remove(cls);
-    }, 160);
-  }
-
-  var unitEls = {};
-  function unitEl(u) {
-    return unitEls[u.side + ':' + u._i];
-  }
-  function updateHp(u) {
-    var e = unitEl(u);
-    if (!e) return;
-    var pct = Math.max(0, u.hp / u.maxHp) * 100;
-    e.querySelector('.hpbar > i').style.width = pct + '%';
-    e.querySelector('.hp-text').textContent = AOL.fmt(u.hp) + '/' + AOL.fmt(u.maxHp);
-  }
-  function floatDmg(u, text, kind) {
-    var e = unitEl(u);
-    if (!e) return;
-    var span = document.createElement('span');
-    span.className = 'dmg-float ' + (kind || '');
-    if (kind === 'heal') span.style.color = '#7be08f';
-    span.textContent = text;
-    e.appendChild(span);
-    setTimeout(function () {
-      span.remove();
-    }, 800);
-  }
-
-  function renderBattle(allies, enemies) {
-    unitEls = {};
-    allies.forEach(function (u, i) {
-      u._i = i;
-    });
-    enemies.forEach(function (u, i) {
-      u._i = i;
-    });
-    function col(list, side) {
-      return (
-        '<div class="team ' +
-        (side === 'enemy' ? 'enemy' : '') +
-        '">' +
-        list
-          .map(function (u) {
-            return (
-              '<div class="unit ' +
-              (side === 'enemy' ? 'enemy-unit' : '') +
-              '" data-uid="' +
-              side +
-              ':' +
-              u._i +
-              '">' +
-              '<div class="u-top"><span class="u-emblem">' +
-              u.emoji +
-              '</span><span class="u-name">' +
-              u.name +
-              '</span></div>' +
-              '<div class="hpbar"><i style="width:100%"></i></div>' +
-              '<div class="hp-text">' +
-              AOL.fmt(u.hp) +
-              '/' +
-              AOL.fmt(u.maxHp) +
-              '</div>' +
-              '</div>'
-            );
-          })
-          .join('') +
-        '</div>'
-      );
-    }
-    el.battle.innerHTML =
-      '<div class="battle-top"><h3>Stage ' +
-      state.campaignStage +
-      '</h3><button class="btn ghost" id="fleeBtn">Retreat</button></div>' +
-      '<div class="battle-arena">' +
-      col(allies, 'ally') +
-      '<div class="vs">VS</div>' +
-      col(enemies, 'enemy') +
-      '</div>' +
-      '<div class="battle-log" id="battleLog">The battle begins!</div>' +
-      '<div class="battle-bottom" id="battleBottom"></div>';
-    el.battle.querySelectorAll('[data-uid]').forEach(function (node) {
-      unitEls[node.getAttribute('data-uid')] = node;
-    });
-    document.getElementById('fleeBtn').onclick = function () {
-      if (battleTimer) {
-        clearInterval(battleTimer);
-        battleTimer = null;
-      }
-      el.battle.classList.add('hidden');
-    };
-  }
-
-  function endBattle(win) {
-    var bottom = document.getElementById('battleBottom');
-    var top = el.battle.querySelector('.battle-arena');
-    var banner = document.createElement('div');
-    banner.className = 'result-banner ' + (win ? 'win' : 'lose');
-    banner.textContent = win ? '★ VICTORY ★' : 'Defeat';
-    if (top) top.parentNode.insertBefore(banner, top.nextSibling);
-
-    if (win) {
-      var reward = AOL.stageReward(state.campaignStage);
-      state.resources.gold += reward.gold;
-      state.gems += reward.gems;
-      grantHeroXp(reward.heroXp);
-      state.campaignStage++;
-      bottom.innerHTML =
-        '<div style="text-align:center">' +
-        '<div style="margin-bottom:0.5rem">Reward: 🪙' +
-        reward.gold +
-        '  💎' +
-        reward.gems +
-        '  ✨' +
-        reward.heroXp +
-        ' hero XP</div>' +
-        '<button class="btn gold" id="continueBtn">Continue</button></div>';
-    } else {
-      bottom.innerHTML =
-        '<div style="text-align:center"><div style="margin-bottom:0.5rem" class="muted">Strengthen your heroes and try again.</div>' +
-        '<button class="btn ghost" id="continueBtn">Continue</button></div>';
-    }
-    document.getElementById('continueBtn').onclick = function () {
-      el.battle.classList.add('hidden');
-      refreshHud();
-      renderCampaign();
-    };
   }
 
   function grantHeroXp(xp) {
