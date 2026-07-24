@@ -18,6 +18,8 @@ built, tested and documented before the next begins.
 | M6        | Economy, Crafting & Market    | ⏳ Planned     |
 | M7        | Guilds, PvP & World Bosses    | ⏳ Planned     |
 | M8        | LiveOps, Progression & Polish | ⏳ Planned     |
+| M9        | Live-Service Platform         | ⏳ Planned     |
+| M10       | Mobile Packaging & Play Store | ⏳ Planned     |
 
 ## M0 — Foundation & Documentation (current)
 
@@ -69,6 +71,20 @@ encounters.
 
 Research trees, achievements, leaderboards, seasonal events, telemetry-driven balancing and
 performance/UX polish.
+
+## M9 — Live-Service Platform
+
+Telemetry pipeline, server-validated ethical in-app purchases, remote configuration/feature flags
+and incremental, integrity-checked content delivery. Makes the game measurable, tunable and
+monetizable. See [ADR-0009](docs/adr/0009-live-service-platform.md) and
+[docs/architecture/LiveServices.md](docs/architecture/LiveServices.md).
+
+## M10 — Mobile Packaging & Play Store
+
+Package the web client as a native app with Capacitor, wire store billing and push notifications
+through a platform abstraction, and prepare the Google Play release. See
+[ADR-0008](docs/adr/0008-mobile-packaging-capacitor.md) and
+[docs/architecture/Mobile.md](docs/architecture/Mobile.md).
 
 > Milestones may be re-sequenced as design review dictates. Any change is recorded in
 > [DECISIONS.md](DECISIONS.md).

@@ -25,6 +25,14 @@ All notable changes to Age of Legends are documented here. The format is based o
   gathering and PvE camp battles) with a deterministic seeded RNG and fixed-timestep loop.
 - Reference study notes enriched with concrete observations from the engineering and gameplay
   references, each mapped to an original Age of Legends system.
+- Mobile and live-service strategy: ADR-0008 (Capacitor packaging for Google Play) and ADR-0009
+  (live-service platform — telemetry, ethical server-validated IAP, remote configuration and
+  incremental content delivery), with architecture documents and roadmap milestones M9–M10.
+
+### Verified
+
+- Full toolchain installed; `pnpm run check` passes (format, lint, typecheck, and 59 tests across
+  shared, engine, game and server) and every package builds.
 
 ## [0.1.0] — Foundation
 
