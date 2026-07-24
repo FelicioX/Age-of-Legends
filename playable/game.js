@@ -44,6 +44,8 @@
       ftue: { step: 0, done: false, firstWinDone: false },
       login: { claimedDay: null, index: 0 },
       missions: { day: null, progress: {}, claimed: {}, ap: 0, chests: {} },
+      gacha: { sinceEpic: 0, sinceLeg: 0, total: 0 },
+      shards: {},
       clock: 0,
       day: 1,
       lastTs: Date.now(),
@@ -544,6 +546,16 @@
       return !h.owned;
     });
     var html =
+      '<button class="summon-banner" id="summonBanner" style="grid-column:1/-1">' +
+      '<span class="sb-ico">🔮</span>' +
+      '<span class="sb-text"><b>Hero Summon</b><span>Call new legends · 💎' +
+      AOL.SUMMON_COST.single +
+      ' / ×10 💎' +
+      AOL.SUMMON_COST.ten +
+      '</span></span>' +
+      '<span class="sb-cta">Summon →</span>' +
+      '</button>';
+    html +=
       '<div class="syn-bar" style="grid-column:1/-1">' + synergyPills(currentSynergy()) + '</div>';
     html += owned.map(heroCard).join('');
     if (locked.length) {
@@ -552,6 +564,8 @@
       html += locked.map(heroCard).join('');
     }
     el.heroGrid.innerHTML = html;
+    var sb = document.getElementById('summonBanner');
+    if (sb) sb.onclick = openSummonModal;
     el.heroGrid.querySelectorAll('[data-detail]').forEach(function (node) {
       node.onclick = function () {
         openHeroModal(node.getAttribute('data-detail'));
@@ -676,6 +690,172 @@
     toast('Recruited ' + h.name + '!', 'gold');
     refreshHud();
     renderHeroes();
+  }
+
+  // -------------------------------------------------------------- summon ---
+  function summonRng() {
+    return new AOL.Rng(
+      (state.seed ^ Math.imul(state.gacha.total + 1, 2654435761) ^ Date.now()) >>> 0,
+    );
+  }
+  function summonOnce(rng) {
+    var rarity = AOL.rollRarity(rng.float(), state.gacha.sinceEpic, state.gacha.sinceLeg);
+    state.gacha.total++;
+    if (AOL.rarityRank[rarity] >= AOL.rarityRank.epic) state.gacha.sinceEpic = 0;
+    else state.gacha.sinceEpic++;
+    if (rarity === 'legendary') state.gacha.sinceLeg = 0;
+    else state.gacha.sinceLeg++;
+    var pool = AOL.HEROES_BY_RARITY[rarity] || AOL.HEROES_BY_RARITY.common;
+    var id = pool[rng.range(0, pool.length - 1)];
+    var h = hero(id);
+    var isNew = !h.owned;
+    if (isNew) {
+      h.owned = true;
+    } else {
+      var sh = AOL.DUPE_SHARDS[rarity];
+      state.shards[id] = (state.shards[id] || 0) + sh;
+    }
+    return { id: id, rarity: rarity, isNew: isNew, shards: isNew ? 0 : AOL.DUPE_SHARDS[rarity] };
+  }
+  function doSummon(count) {
+    var cost = count === 10 ? AOL.SUMMON_COST.ten : AOL.SUMMON_COST.single;
+    if (state.gems < cost) {
+      toast('Not enough gems.', 'bad');
+      return;
+    }
+    state.gems -= cost;
+    var rng = summonRng();
+    var results = [];
+    for (var i = 0; i < count; i++) results.push(summonOnce(rng));
+    var best = results.reduce(function (m, r) {
+      return Math.max(m, AOL.rarityRank[r.rarity]);
+    }, 0);
+    AOL.Audio.sfx(best >= AOL.rarityRank.epic ? 'ultimate' : 'click');
+    refreshHud();
+    renderHeroes();
+    renderSummonResults(results);
+    save();
+  }
+  function openSummonModal() {
+    openBuilding = null;
+    openHero = null;
+    renderSummonPanel();
+    el.modal.classList.remove('hidden');
+  }
+  function summonOddsRows() {
+    return AOL.SUMMON_ODDS.map(function (o) {
+      var r = AOL.RARITY[o.r];
+      return (
+        '<div class="odds-row"><span class="rarity-' +
+        o.r +
+        '">' +
+        AOL.stars(o.r) +
+        ' ' +
+        r.label +
+        '</span><b>' +
+        (o.p * 100).toFixed(0) +
+        '%</b></div>'
+      );
+    }).join('');
+  }
+  function renderSummonPanel() {
+    var g = state.gacha;
+    var html =
+      '<div class="modal-head"><div class="b-emoji">🔮</div><div><h3>Hero Summon</h3>' +
+      '<div class="lvl">Total summons: ' +
+      g.total +
+      '</div></div></div>';
+    html +=
+      '<p class="muted" style="font-size:0.82rem;margin:0.2rem 0 0.6rem">Call new legends to your banner. Duplicate heroes become shards for ascension.</p>';
+    html += '<div class="odds-box">' + summonOddsRows() + '</div>';
+    html +=
+      '<div class="pity-box">' +
+      '<div class="pity-line"><span>Guaranteed Epic+ within</span><b>' +
+      (AOL.PITY_EPIC - g.sinceEpic) +
+      ' pull' +
+      (AOL.PITY_EPIC - g.sinceEpic === 1 ? '' : 's') +
+      '</b></div>' +
+      '<div class="pity-line"><span>Guaranteed Legendary within</span><b>' +
+      (AOL.PITY_LEG - g.sinceLeg) +
+      ' pulls</b></div>' +
+      '</div>';
+    var canSingle = state.gems >= AOL.SUMMON_COST.single;
+    var canTen = state.gems >= AOL.SUMMON_COST.ten;
+    html +=
+      '<div class="modal-actions">' +
+      '<button class="btn ' +
+      (canSingle ? 'gold' : '') +
+      '" id="summon1" ' +
+      (canSingle ? '' : 'disabled') +
+      '>Summon ×1 · 💎' +
+      AOL.SUMMON_COST.single +
+      '</button>' +
+      '<button class="btn ' +
+      (canTen ? 'green' : '') +
+      '" id="summon10" ' +
+      (canTen ? '' : 'disabled') +
+      '>Summon ×10 · 💎' +
+      AOL.SUMMON_COST.ten +
+      '</button>' +
+      '</div>';
+    html +=
+      '<div class="modal-actions"><button class="btn ghost" id="closeModal">Close</button></div>';
+    el.modalCard.innerHTML = html;
+    var b1 = document.getElementById('summon1');
+    if (b1)
+      b1.onclick = function () {
+        doSummon(1);
+      };
+    var b10 = document.getElementById('summon10');
+    if (b10)
+      b10.onclick = function () {
+        doSummon(10);
+      };
+    document.getElementById('closeModal').onclick = closeModal;
+  }
+  function renderSummonResults(results) {
+    var cards = results
+      .map(function (r) {
+        var h = hero(r.id);
+        var rr = AOL.RARITY[r.rarity];
+        return (
+          '<div class="summon-card bg-' +
+          rr.key +
+          ' rarity-glow-' +
+          rr.key +
+          '">' +
+          '<span class="emblem">' +
+          heroEmblem(h) +
+          '</span>' +
+          '<div class="sc-name">' +
+          h.name +
+          '</div>' +
+          '<div class="hero-stars rarity-' +
+          rr.key +
+          '">' +
+          AOL.stars(r.rarity) +
+          '</div>' +
+          '<div class="sc-tag">' +
+          (r.isNew ? '<span class="sc-new">NEW</span>' : '+' + r.shards + ' 🧩') +
+          '</div></div>'
+        );
+      })
+      .join('');
+    var html =
+      '<div class="modal-head"><div class="b-emoji">✨</div><div><h3>Summon Results</h3>' +
+      '<div class="lvl">' +
+      results.length +
+      ' hero' +
+      (results.length === 1 ? '' : 'es') +
+      '</div></div></div>';
+    html += '<div class="summon-grid">' + cards + '</div>';
+    html +=
+      '<div class="modal-actions">' +
+      '<button class="btn gold" id="summonAgain">Summon again</button>' +
+      '<button class="btn ghost" id="closeModal">Close</button></div>';
+    el.modalCard.innerHTML = html;
+    document.getElementById('summonAgain').onclick = renderSummonPanel;
+    document.getElementById('closeModal').onclick = closeModal;
   }
 
   // ----------------------------------------------------------- hero detail ---
@@ -1485,6 +1665,8 @@
     if (!state.login) state.login = { claimedDay: null, index: 0 };
     if (!state.missions)
       state.missions = { day: null, progress: {}, claimed: {}, ap: 0, chests: {} };
+    if (!state.gacha) state.gacha = { sinceEpic: 0, sinceLeg: 0, total: 0 };
+    if (!state.shards) state.shards = {};
     if (!state.jobs) {
       state.jobs = [];
       // Convert any in-flight legacy upgrade into an active job.

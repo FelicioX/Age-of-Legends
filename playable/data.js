@@ -645,6 +645,42 @@ window.AOL = window.AOL || {};
     return { gold: Math.floor(r.gold * t), heroXp: Math.floor(r.heroXp * t), seconds: t };
   };
 
+  // --- Summon / gacha ------------------------------------------------------
+  // Transparent odds with pity. Rarities listed high→low for cumulative roll.
+  AOL.SUMMON_ODDS = [
+    { r: 'legendary', p: 0.03 },
+    { r: 'epic', p: 0.12 },
+    { r: 'rare', p: 0.3 },
+    { r: 'common', p: 0.55 },
+  ];
+  AOL.SUMMON_COST = { single: 100, ten: 900 }; // gems
+  AOL.PITY_EPIC = 10; // guaranteed epic+ at least every 10 pulls
+  AOL.PITY_LEG = 60; // hard pity: guaranteed legendary
+  // Shards granted when a summon produces a hero you already own.
+  AOL.DUPE_SHARDS = { common: 10, rare: 15, epic: 25, legendary: 40 };
+
+  AOL.rarityRank = { common: 0, rare: 1, epic: 2, legendary: 3 };
+  // Pure rarity roll. `f` in [0,1); pity counters are pulls since last epic+/leg.
+  AOL.rollRarity = function (f, sinceEpic, sinceLeg) {
+    if (sinceLeg + 1 >= AOL.PITY_LEG) return 'legendary';
+    var acc = 0,
+      r = 'common';
+    for (var i = 0; i < AOL.SUMMON_ODDS.length; i++) {
+      acc += AOL.SUMMON_ODDS[i].p;
+      if (f < acc) {
+        r = AOL.SUMMON_ODDS[i].r;
+        break;
+      }
+    }
+    if (sinceEpic + 1 >= AOL.PITY_EPIC && AOL.rarityRank[r] < AOL.rarityRank.epic) r = 'epic';
+    return r;
+  };
+  // Heroes grouped by rarity, for picking a summon result.
+  AOL.HEROES_BY_RARITY = {};
+  AOL.HERO_POOL.forEach(function (h) {
+    (AOL.HEROES_BY_RARITY[h.rarity] = AOL.HEROES_BY_RARITY[h.rarity] || []).push(h.id);
+  });
+
   // --- First-time user experience (scripted onboarding) -------------------
   // A short, skippable intro. One step grants a free rare hero; the flow ends
   // by pointing the player at their first battle.

@@ -1026,6 +1026,119 @@ body {
   flex: 0 0 auto;
 }
 
+/* ---------- Summon (gacha) ---------- */
+.summon-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(208, 168, 255, 0.4);
+  background: linear-gradient(120deg, rgba(123, 91, 176, 0.22), rgba(74, 47, 117, 0.15));
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  color: inherit;
+  margin-bottom: 0.4rem;
+}
+.summon-banner .sb-ico {
+  font-size: 1.8rem;
+}
+.summon-banner .sb-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.summon-banner .sb-text b {
+  font-size: 0.95rem;
+}
+.summon-banner .sb-text span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.summon-banner .sb-cta {
+  color: #d0a8ff;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.odds-box {
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.odds-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  padding: 2px 0;
+}
+.pity-box {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.4rem;
+}
+.pity-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.pity-line b {
+  color: var(--gold);
+}
+.summon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 0.5rem;
+  margin: 0.4rem 0 0.8rem;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.summon-card {
+  border-radius: 10px;
+  padding: 0.5rem 0.3rem;
+  text-align: center;
+  border: 1px solid var(--edge-2);
+  position: relative;
+  animation: scReveal 0.32s ease-out backwards;
+}
+.summon-card .emblem {
+  font-size: 1.7rem;
+}
+.summon-card .sc-name {
+  font-size: 0.66rem;
+  font-weight: 600;
+  margin-top: 2px;
+  line-height: 1.1;
+}
+.summon-card .sc-tag {
+  font-size: 0.66rem;
+  margin-top: 2px;
+}
+.summon-card .sc-new {
+  color: #5fd06a;
+  font-weight: 800;
+}
+.rarity-glow-epic {
+  box-shadow: 0 0 12px rgba(200, 120, 255, 0.35);
+}
+.rarity-glow-legendary {
+  box-shadow: 0 0 16px rgba(255, 196, 80, 0.5);
+}
+@keyframes scReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.7) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ---------- FTUE (onboarding) ---------- */
 .ftue {
   position: fixed;
