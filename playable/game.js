@@ -408,6 +408,10 @@
         b.upgradeTotalMs = 0;
         state.jobs.splice(state.jobs.indexOf(j), 1);
         bumpMission('upgrade', 1);
+        if (AOL.Kingdom.effect) {
+          AOL.Kingdom.effect(j.type, 'spark', AOL.BUILDINGS[j.type].accent);
+          AOL.Kingdom.effect(j.type, 'dust');
+        }
         toast(AOL.BUILDINGS[j.type].name + ' upgraded to Lv ' + b.level + '!', 'gold');
         if (j.type === 'castle') toast('New building tiers unlocked!', 'good');
       });
