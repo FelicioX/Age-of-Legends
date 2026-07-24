@@ -40,6 +40,7 @@
       formation: {},
       jobs: [],
       campaignStage: 1,
+      idle: { lastCollect: Date.now() },
       clock: 0,
       day: 1,
       lastTs: Date.now(),
@@ -900,18 +901,32 @@
   function renderCampaign() {
     var stage = state.campaignStage;
     var reward = AOL.stageReward(stage);
+    var meta = AOL.stageMeta(stage);
+    var chLen = AOL.chapterLength();
     var enemyPreview = AOL.makeEnemyTeam(stage, new AOL.Rng(state.seed + stage));
     var enemyPower = enemyPreview.reduce(function (s, e) {
       return s + Math.round(e.maxHp * 0.25 + e.atk * 3.2 + e.spd * 2);
     }, 0);
 
     var html =
-      '<div class="stage-banner">' +
+      '<div class="chapter-line">' +
+      '<span class="ch-name">' +
+      meta.chapterName +
+      '</span>' +
+      '<span class="ch-prog">' +
+      (meta.endless ? 'Cleared · Endless' : 'Stage ' + Math.min(stage, chLen) + ' / ' + chLen) +
+      '</span></div>';
+
+    html +=
+      '<div class="stage-banner' +
+      (meta.boss ? ' boss' : '') +
+      '">' +
       '<div class="stage-no">' +
-      stage +
+      (meta.boss ? '☠️' : stage) +
       '</div>' +
-      '<div class="stage-info"><h3>Stage ' +
-      stage +
+      '<div class="stage-info"><h3>' +
+      (meta.boss ? 'BOSS · ' : '') +
+      meta.name +
       '</h3>' +
       '<div class="muted" style="font-size:0.8rem">Enemy power ~ ' +
       AOL.fmt(enemyPower) +
@@ -924,6 +939,8 @@
       AOL.fmt(partyPower()) +
       '</div></div>' +
       '</div>';
+
+    html += idlePanel();
 
     html +=
       '<div class="form-head"><span class="muted" style="font-size:0.8rem">Formation</span>' +
@@ -938,12 +955,26 @@
       '>' +
       (state.party.length === 0 ? 'Add heroes to your party first' : '⚔️ Battle  (–6 ⚡)') +
       '</button>';
+
+    var canSweep = stage > 1 && state.stamina >= 6;
+    html +=
+      '<button class="btn ghost" id="sweepBtn" style="width:100%;margin-top:0.4rem" ' +
+      (canSweep ? '' : 'disabled') +
+      '>' +
+      (stage > 1
+        ? '⏩ Sweep Stage ' + (stage - 1) + '  (–6 ⚡, instant reward)'
+        : 'Clear a stage to unlock Sweep') +
+      '</button>';
     html +=
       '<div class="muted" style="font-size:0.75rem;text-align:center;margin-top:0.5rem">Tip: raise the Barracks and level your heroes to grow your power.</div>';
 
     el.campaignBody.innerHTML = html;
     var fb = document.getElementById('fightBtn');
     if (fb) fb.onclick = startBattle;
+    var sw = document.getElementById('sweepBtn');
+    if (sw) sw.onclick = sweepStage;
+    var col = document.getElementById('idleCollect');
+    if (col) col.onclick = collectIdle;
     el.campaignBody.querySelectorAll('[data-line]').forEach(function (node) {
       node.onclick = function () {
         var id = node.getAttribute('data-line');
@@ -952,6 +983,83 @@
         renderCampaign();
       };
     });
+  }
+
+  // ------------------------------------------------------- idle & sweep ---
+  function highestCleared() {
+    return state.campaignStage - 1;
+  }
+  function idlePendingNow() {
+    var elapsed = (Date.now() - (state.idle.lastCollect || Date.now())) / 1000;
+    return AOL.idlePending(highestCleared(), elapsed);
+  }
+  function idlePanel() {
+    var cleared = highestCleared();
+    var rate = AOL.idleRate(cleared);
+    var p = idlePendingNow();
+    var capH = Math.round(AOL.IDLE_CAP_SECONDS / 3600);
+    var body =
+      cleared < 1
+        ? '<span class="muted" style="font-size:0.78rem">Clear Stage 1 to start earning idle rewards.</span>'
+        : '<div class="idle-amounts">🪙 ' +
+          AOL.fmt(p.gold) +
+          ' &nbsp; ✨ ' +
+          AOL.fmt(p.heroXp) +
+          ' XP</div>' +
+          '<div class="muted" style="font-size:0.72rem">+' +
+          rate.gold +
+          '🪙/s · +' +
+          rate.heroXp +
+          '✨/s · caps at ' +
+          capH +
+          'h</div>';
+    var canCollect = cleared >= 1 && (p.gold > 0 || p.heroXp > 0);
+    return (
+      '<div class="idle-panel">' +
+      '<div class="idle-head">💤 Idle rewards</div>' +
+      '<div class="idle-body">' +
+      body +
+      '</div>' +
+      '<button class="btn ' +
+      (canCollect ? 'green' : '') +
+      '" id="idleCollect" ' +
+      (canCollect ? '' : 'disabled') +
+      '>Collect</button>' +
+      '</div>'
+    );
+  }
+  function collectIdle() {
+    var p = idlePendingNow();
+    if (p.gold <= 0 && p.heroXp <= 0) return;
+    state.resources.gold += p.gold;
+    grantHeroXp(p.heroXp);
+    state.idle.lastCollect = Date.now();
+    AOL.Audio.sfx('victory');
+    toast('Idle rewards: 🪙' + AOL.fmt(p.gold) + ' ✨' + AOL.fmt(p.heroXp), 'gold');
+    refreshHud();
+    renderCampaign();
+    save();
+  }
+  function sweepStage() {
+    var s = state.campaignStage - 1;
+    if (s < 1) {
+      toast('No cleared stage to sweep.', 'bad');
+      return;
+    }
+    if (state.stamina < 6) {
+      toast('Not enough stamina.', 'bad');
+      return;
+    }
+    state.stamina -= 6;
+    var reward = AOL.stageReward(s);
+    state.resources.gold += reward.gold;
+    state.gems += reward.gems;
+    grantHeroXp(reward.heroXp);
+    AOL.Audio.sfx('click');
+    toast('Swept Stage ' + s + ': 🪙' + reward.gold + ' 💎' + reward.gems, 'good');
+    refreshHud();
+    renderCampaign();
+    save();
   }
 
   // ----------------------------------------------------------- auto-battle ---
@@ -1071,6 +1179,7 @@
   // Bring an older save up to the current schema (adds fields introduced later).
   function migrate() {
     if (!state.formation) state.formation = {};
+    if (!state.idle) state.idle = { lastCollect: Date.now() };
     if (!state.jobs) {
       state.jobs = [];
       // Convert any in-flight legacy upgrade into an active job.

@@ -588,6 +588,63 @@ window.AOL = window.AOL || {};
     return { gold: 120 + stage * 60, gems: stage % 3 === 0 ? 15 : 5, heroXp: 40 + stage * 20 };
   };
 
+  // --- Campaign chapters ---------------------------------------------------
+  // Chapter 1: a hand-named run of stages. A boss caps the chapter. Enemy
+  // composition still comes from AOL.makeEnemyTeam(globalStage). Stages beyond
+  // the last defined one keep scaling procedurally ("endless").
+  AOL.CHAPTERS = [
+    {
+      id: 1,
+      name: 'The Ironvale Marches',
+      stages: [
+        { name: 'Broken Road' },
+        { name: 'Thornwatch Ford' },
+        { name: 'Ashen Hollow' },
+        { name: 'Warden’s Gate', boss: true },
+        { name: 'Cinder Fields' },
+        { name: 'Gravemist Fen' },
+        { name: 'The Sunken Span' },
+        { name: 'Ruined Bastion', boss: true },
+        { name: 'Wolfsteeth Pass' },
+        { name: 'Hollowlight Wood' },
+        { name: 'Duskbane Vigil' },
+        { name: 'Ironvale Keep', boss: true },
+      ],
+    },
+  ];
+  AOL.chapterOf = function (stage) {
+    // Single chapter for v1; returns the chapter and 1-based local index.
+    var ch = AOL.CHAPTERS[0];
+    return { chapter: ch, local: stage, len: ch.stages.length };
+  };
+  AOL.stageMeta = function (stage) {
+    var ch = AOL.CHAPTERS[0];
+    var s = ch.stages[stage - 1];
+    if (s) return { name: s.name, boss: !!s.boss, chapterName: ch.name, endless: false };
+    return {
+      name: 'Endless ' + (stage - ch.stages.length),
+      boss: stage % 5 === 0,
+      chapterName: ch.name,
+      endless: true,
+    };
+  };
+  AOL.chapterLength = function () {
+    return AOL.CHAPTERS[0].stages.length;
+  };
+
+  // --- Idle campaign income ------------------------------------------------
+  // The highest cleared stage drips passive rewards, collectable on return.
+  AOL.IDLE_CAP_SECONDS = 8 * 3600; // 8h ceiling
+  AOL.idleRate = function (clearedStage) {
+    if (clearedStage < 1) return { gold: 0, heroXp: 0 };
+    return { gold: 6 + clearedStage * 3, heroXp: 2 + clearedStage };
+  };
+  AOL.idlePending = function (clearedStage, elapsedSec) {
+    var t = Math.min(AOL.IDLE_CAP_SECONDS, Math.max(0, elapsedSec));
+    var r = AOL.idleRate(clearedStage);
+    return { gold: Math.floor(r.gold * t), heroXp: Math.floor(r.heroXp * t), seconds: t };
+  };
+
   AOL.fmt = function (n) {
     n = Math.floor(n);
     if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';

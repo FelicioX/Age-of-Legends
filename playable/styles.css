@@ -667,6 +667,21 @@ body {
 #campaignBody {
   padding: 1rem;
 }
+.chapter-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+}
+.chapter-line .ch-name {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+.chapter-line .ch-prog {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
 .stage-banner {
   background: linear-gradient(120deg, #22305a, #17203a);
   border: 1px solid var(--edge-2);
@@ -677,6 +692,34 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+.stage-banner.boss {
+  background: linear-gradient(120deg, #5a2233, #3a1720);
+  border-color: rgba(255, 90, 90, 0.5);
+}
+.idle-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: rgba(90, 200, 120, 0.07);
+  border: 1px solid rgba(90, 200, 120, 0.28);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 1rem;
+}
+.idle-panel .idle-head {
+  font-weight: 700;
+  font-size: 0.82rem;
+  flex: 0 0 auto;
+}
+.idle-panel .idle-body {
+  flex: 1;
+}
+.idle-panel .idle-amounts {
+  font-weight: 700;
+}
+.idle-panel .btn {
+  flex: 0 0 auto;
 }
 .stage-banner .stage-no {
   font-size: 2rem;
