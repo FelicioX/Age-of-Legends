@@ -37,6 +37,7 @@
         };
       }),
       party: [],
+      formation: {},
       campaignStage: 1,
       clock: 0,
       day: 1,
@@ -88,6 +89,14 @@
     return state.heroes.find(function (h) {
       return h.id === id;
     });
+  }
+  function heroLine(id) {
+    if (state.formation && state.formation[id]) return state.formation[id];
+    return AOL.defaultLine(hero(id));
+  }
+  function setLine(id, line) {
+    if (!state.formation) state.formation = {};
+    state.formation[id] = line;
   }
   function affordable(cost) {
     return Object.keys(cost).every(function (k) {
@@ -647,7 +656,8 @@
     var syn = currentSynergy();
     var p = state.party.reduce(function (sum, id) {
       var h = hero(id);
-      return sum + AOL.applySynergy(h, syn, AOL.heroStats(h)).power;
+      var st = AOL.applyFormation(heroLine(id), AOL.heroStats(h));
+      return sum + AOL.applySynergy(h, syn, st).power;
     }, 0);
     p += (state.buildings.barracks.level - 1) * AOL.BUILDINGS.barracks.armyPower * 5;
     return p;
@@ -681,6 +691,54 @@
       .join('');
   }
 
+  function formationSlot(id) {
+    var h = hero(id);
+    var line = heroLine(id);
+    var fac = AOL.FACTIONS[AOL.heroFaction(h)];
+    return (
+      '<div class="form-slot line-' +
+      line +
+      '" data-line="' +
+      id +
+      '" title="' +
+      h.name +
+      ' · ' +
+      AOL.FORMATION[line].name +
+      '">' +
+      '<span class="emblem">' +
+      heroEmblem(h) +
+      '</span>' +
+      (fac
+        ? '<span class="form-fac" style="color:' + fac.color + '">' + fac.emoji + '</span>'
+        : '') +
+      '<span class="lvl-badge">Lv ' +
+      h.level +
+      '</span></div>'
+    );
+  }
+  function formationEditor() {
+    var front = state.party.filter(function (id) {
+      return heroLine(id) === 'front';
+    });
+    var back = state.party.filter(function (id) {
+      return heroLine(id) === 'back';
+    });
+    var rows = '';
+    rows +=
+      '<div class="form-row"><span class="form-tag front">FRONT</span><div class="form-cells">' +
+      (front.length
+        ? front.map(formationSlot).join('')
+        : '<span class="form-empty">— hold the line —</span>') +
+      '</div></div>';
+    rows +=
+      '<div class="form-row"><span class="form-tag back">BACK</span><div class="form-cells">' +
+      (back.length
+        ? back.map(formationSlot).join('')
+        : '<span class="form-empty">— ranged & support —</span>') +
+      '</div></div>';
+    return '<div class="formation">' + rows + '</div>';
+  }
+
   function renderCampaign() {
     var stage = state.campaignStage;
     var reward = AOL.stageReward(stage);
@@ -709,23 +767,10 @@
       '</div></div>' +
       '</div>';
 
-    html += '<div class="muted" style="font-size:0.8rem;margin-bottom:0.3rem">Battle party</div>';
-    html += '<div class="party-strip">';
-    for (var i = 0; i < 5; i++) {
-      var id = state.party[i];
-      if (id) {
-        var h = hero(id);
-        html +=
-          '<div class="party-slot"><span class="emblem">' +
-          heroEmblem(h) +
-          '</span><span class="lvl-badge">Lv ' +
-          h.level +
-          '</span></div>';
-      } else {
-        html += '<div class="party-slot"><span class="empty-slot">+</span></div>';
-      }
-    }
-    html += '</div>';
+    html +=
+      '<div class="form-head"><span class="muted" style="font-size:0.8rem">Formation</span>' +
+      '<span class="muted" style="font-size:0.72rem">Tap a hero to swap line · Front +12% HP · Back +12% ATK</span></div>';
+    html += formationEditor();
     html += '<div class="syn-bar">' + synergyPills(currentSynergy()) + '</div>';
 
     var canFight = state.party.length > 0 && state.stamina >= 6;
@@ -741,6 +786,14 @@
     el.campaignBody.innerHTML = html;
     var fb = document.getElementById('fightBtn');
     if (fb) fb.onclick = startBattle;
+    el.campaignBody.querySelectorAll('[data-line]').forEach(function (node) {
+      node.onclick = function () {
+        var id = node.getAttribute('data-line');
+        setLine(id, heroLine(id) === 'front' ? 'back' : 'front');
+        AOL.Audio.sfx('click');
+        renderCampaign();
+      };
+    });
   }
 
   // ----------------------------------------------------------- auto-battle ---
@@ -757,12 +810,14 @@
     var syn = currentSynergy();
     var allies = state.party.map(function (id) {
       var h = hero(id);
-      var st = AOL.applySynergy(h, syn, AOL.heroStats(h));
+      var line = heroLine(id);
+      var st = AOL.applySynergy(h, syn, AOL.applyFormation(line, AOL.heroStats(h)));
       var bonus = 1 + (state.buildings.barracks.level - 1) * 0.05;
       return {
         name: h.name,
         emoji: st.emoji,
         role: st.role,
+        line: line,
         maxHp: Math.round(st.hp * bonus),
         hp: Math.round(st.hp * bonus),
         atk: Math.round(st.atk * bonus),

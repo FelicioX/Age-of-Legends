@@ -159,6 +159,7 @@ window.AOL = window.AOL || {};
     return {
       name: src.name,
       role: src.role,
+      line: src.line || null,
       side: side,
       index: index,
       maxHp: src.maxHp,
@@ -210,7 +211,8 @@ window.AOL = window.AOL || {};
       var front = [],
         back = [];
       team.forEach(function (u) {
-        if (u.role === 'tank' || u.role === 'dps') front.push(u);
+        var toFront = u.line ? u.line === 'front' : u.role === 'tank' || u.role === 'dps';
+        if (toFront) front.push(u);
         else back.push(u);
       });
       if (front.length === 0 && back.length) {

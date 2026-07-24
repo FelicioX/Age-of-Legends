@@ -494,6 +494,36 @@ window.AOL = window.AOL || {};
     return { gold: Math.round(base), food: Math.round(base * 0.7) };
   };
 
+  // --- Formation -----------------------------------------------------------
+  // Two lines: the front holds the line (extra HP), the back is protected and
+  // hits harder (extra ATK). A hero's default line comes from its role.
+  AOL.FORMATION = {
+    front: { key: 'front', name: 'Front line', mod: { hp: 0.12 }, label: '+12% HP' },
+    back: { key: 'back', name: 'Back line', mod: { atk: 0.12 }, label: '+12% ATK' },
+  };
+  AOL.defaultLine = function (hero) {
+    var role = AOL.CLASSES[hero.cls] ? AOL.CLASSES[hero.cls].role : 'dps';
+    return role === 'tank' || role === 'dps' ? 'front' : 'back';
+  };
+  // Apply the chosen line's bonus on top of a stats object.
+  AOL.applyFormation = function (line, stats) {
+    var f = AOL.FORMATION[line];
+    if (!f) return stats;
+    var hp = stats.hp,
+      atk = stats.atk,
+      spd = stats.spd;
+    hp = Math.round(hp * (1 + (f.mod.hp || 0)));
+    atk = Math.round(atk * (1 + (f.mod.atk || 0)));
+    return {
+      hp: hp,
+      atk: atk,
+      spd: spd,
+      power: AOL.powerFrom(hp, atk, spd),
+      role: stats.role,
+      emoji: stats.emoji,
+    };
+  };
+
   // --- Building costs & timers --------------------------------------------
   AOL.buildingMaxTier = function (state, type) {
     return type === 'castle' ? 30 : state.buildings.castle ? state.buildings.castle.level : 1;

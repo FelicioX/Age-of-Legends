@@ -653,6 +653,111 @@ body {
   font-size: 1.5rem;
 }
 
+/* ---------- Formation ---------- */
+.form-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+.formation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+.form-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  border-radius: 12px;
+  padding: 0.4rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--edge);
+}
+.form-tag {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  border-radius: 8px;
+  padding: 0.2rem 0.1rem;
+  display: grid;
+  place-items: center;
+  flex: 0 0 20px;
+}
+.form-tag.front {
+  color: #ff9a6c;
+  background: rgba(255, 120, 60, 0.12);
+}
+.form-tag.back {
+  color: #6cc7ff;
+  background: rgba(60, 150, 255, 0.12);
+}
+.form-cells {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 76px;
+  flex: 1;
+}
+.form-slot {
+  width: 60px;
+  height: 72px;
+  border-radius: 10px;
+  border: 1px solid var(--edge-2);
+  display: grid;
+  place-items: center;
+  position: relative;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03);
+  transition:
+    transform 0.12s,
+    border-color 0.12s,
+    background 0.12s;
+}
+.form-slot:hover {
+  transform: translateY(-2px);
+}
+.form-slot.line-front {
+  border-color: rgba(255, 120, 60, 0.5);
+  background: rgba(255, 120, 60, 0.08);
+}
+.form-slot.line-back {
+  border-color: rgba(60, 150, 255, 0.5);
+  background: rgba(60, 150, 255, 0.08);
+}
+.form-slot .emblem {
+  font-size: 1.7rem;
+}
+.form-slot .form-fac {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.72rem;
+}
+.form-slot .lvl-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 0.6rem;
+  color: var(--gold);
+  background: rgba(6, 10, 20, 0.85);
+  padding: 0 4px;
+  border-radius: 6px;
+}
+.form-empty {
+  color: var(--edge-2);
+  font-size: 0.75rem;
+  font-style: italic;
+  padding: 0 0.4rem;
+}
+
 /* ---------- Battle ---------- */
 .battle {
   position: fixed;
