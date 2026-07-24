@@ -413,8 +413,9 @@ window.AOL = window.AOL || {};
     var cls = AOL.CLASSES[hero.cls];
     var r = AOL.RARITY[hero.rarity];
     var lvlScale = 1 + 0.14 * (hero.level - 1);
-    var hp = cls.hp * r.mult * lvlScale;
-    var atk = cls.atk * r.mult * lvlScale;
+    var starMul = AOL.starBonus(hero.stars || AOL.baseStars(hero.rarity), hero.rarity);
+    var hp = cls.hp * r.mult * lvlScale * starMul;
+    var atk = cls.atk * r.mult * lvlScale * starMul;
     var spd = cls.spd;
     var pas = AOL.heroPassive(hero);
     if (pas && pas.mod) {
@@ -521,6 +522,66 @@ window.AOL = window.AOL || {};
       power: AOL.powerFrom(hp, atk, spd),
       role: stats.role,
       emoji: stats.emoji,
+    };
+  };
+
+  // --- Star ascension ------------------------------------------------------
+  // Heroes start at their rarity's star count and can be ascended with shards
+  // (earned from duplicate summons). Each star above the base lifts HP & ATK.
+  AOL.STAR_MAX = 6;
+  AOL.baseStars = function (rarity) {
+    return AOL.RARITY[rarity].stars;
+  };
+  AOL.starBonus = function (stars, rarity) {
+    return 1 + 0.08 * (stars - AOL.baseStars(rarity));
+  };
+  // Shards needed to go from `stars` to `stars + 1`.
+  AOL.ascendCost = function (stars, rarity) {
+    return 20 * (stars - AOL.baseStars(rarity) + 1);
+  };
+
+  // --- Equipment -----------------------------------------------------------
+  AOL.GEAR_SLOTS = [
+    { key: 'weapon', name: 'Weapon', icon: '🗡️', stat: 'atk', base: 12 },
+    { key: 'armor', name: 'Armor', icon: '🛡️', stat: 'hp', base: 80 },
+    { key: 'boots', name: 'Boots', icon: '👢', stat: 'spd', base: 3 },
+    { key: 'trinket', name: 'Trinket', icon: '💍', stat: 'atk', base: 8 },
+  ];
+  AOL.GEAR_SLOT_BY_KEY = {};
+  AOL.GEAR_SLOTS.forEach(function (s) {
+    AOL.GEAR_SLOT_BY_KEY[s.key] = s;
+  });
+  AOL.GEAR_NAMES = {
+    weapon: ['Blade', 'Axe', 'Spear', 'Maul', 'Bow'],
+    armor: ['Plate', 'Mail', 'Aegis', 'Guard', 'Cuirass'],
+    boots: ['Treads', 'Greaves', 'Striders', 'Sabatons', 'Boots'],
+    trinket: ['Charm', 'Sigil', 'Idol', 'Locket', 'Talisman'],
+  };
+  AOL.gearStatValue = function (item) {
+    var slot = AOL.GEAR_SLOT_BY_KEY[item.slot];
+    var r = AOL.RARITY[item.rarity];
+    return Math.round(slot.base * r.mult * (1 + 0.12 * (item.level - 1)));
+  };
+  AOL.gearPower = function (item) {
+    var slot = AOL.GEAR_SLOT_BY_KEY[item.slot];
+    var v = AOL.gearStatValue(item);
+    if (slot.stat === 'hp') return Math.round(v * 0.25);
+    if (slot.stat === 'spd') return Math.round(v * 2);
+    return Math.round(v * 3.2);
+  };
+  // Roll a gear item scaled by campaign tier. `roll` is a rarity float helper.
+  AOL.makeGear = function (rng, tier) {
+    var slot = rng.pick(AOL.GEAR_SLOTS);
+    var f = rng.float();
+    var rarity = f < 0.06 ? 'legendary' : f < 0.22 ? 'epic' : f < 0.55 ? 'rare' : 'common';
+    var level = Math.max(1, Math.round(tier * 0.6) + rng.range(0, 2));
+    var name = rng.pick(AOL.GEAR_NAMES[slot.key]);
+    return {
+      id: 'g' + (rng.u32() % 0xffffffff).toString(36) + Date.now().toString(36).slice(-3),
+      slot: slot.key,
+      rarity: rarity,
+      level: level,
+      name: AOL.RARITY[rarity].label + ' ' + name,
     };
   };
 

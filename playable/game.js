@@ -34,6 +34,8 @@
           owned: h.owned,
           level: 1,
           xp: 0,
+          stars: AOL.baseStars(h.rarity),
+          gear: {},
         };
       }),
       party: [],
@@ -46,6 +48,7 @@
       missions: { day: null, progress: {}, claimed: {}, ap: 0, chests: {} },
       gacha: { sinceEpic: 0, sinceLeg: 0, total: 0 },
       shards: {},
+      inventory: [],
       clock: 0,
       day: 1,
       lastTs: Date.now(),
@@ -133,6 +136,87 @@
     if (r.gems) parts.push('💎' + r.gems);
     if (r.heroXp) parts.push('✨' + r.heroXp);
     return parts.join(' ');
+  }
+
+  // Hero stats including equipped gear (star bonus is already folded into
+  // AOL.heroStats). Formation and synergy multipliers apply on top of this.
+  function fullStats(h) {
+    var base = AOL.heroStats(h);
+    var addHp = 0,
+      addAtk = 0,
+      addSpd = 0;
+    var g = h.gear || {};
+    AOL.GEAR_SLOTS.forEach(function (slot) {
+      var it = g[slot.key];
+      if (!it) return;
+      var v = AOL.gearStatValue(it);
+      if (slot.stat === 'hp') addHp += v;
+      else if (slot.stat === 'spd') addSpd += v;
+      else addAtk += v;
+    });
+    var hp = base.hp + addHp;
+    var atk = base.atk + addAtk;
+    var spd = base.spd + addSpd;
+    return {
+      hp: hp,
+      atk: atk,
+      spd: spd,
+      power: AOL.powerFrom(hp, atk, spd),
+      role: base.role,
+      emoji: base.emoji,
+    };
+  }
+  function shardsOf(id) {
+    return state.shards[id] || 0;
+  }
+  function ascendHero(id) {
+    var h = hero(id);
+    if (h.stars >= AOL.STAR_MAX) {
+      toast('Already at max stars.', 'bad');
+      return;
+    }
+    var cost = AOL.ascendCost(h.stars, h.rarity);
+    if (shardsOf(id) < cost) {
+      toast('Need ' + cost + ' shards to ascend.', 'bad');
+      return;
+    }
+    state.shards[id] -= cost;
+    h.stars++;
+    AOL.Audio.sfx('ultimate');
+    toast(h.name + ' ascended to ' + h.stars + '★!', 'gold');
+    refreshHud();
+    if (openHero === id) renderHeroModal(id);
+    renderHeroes();
+    save();
+  }
+  function equipItem(heroId, itemId) {
+    var h = hero(heroId);
+    var idx = state.inventory.findIndex(function (i) {
+      return i.id === itemId;
+    });
+    if (idx < 0) return;
+    var item = state.inventory[idx];
+    state.inventory.splice(idx, 1);
+    var prev = h.gear[item.slot];
+    if (prev) state.inventory.push(prev);
+    h.gear[item.slot] = item;
+    AOL.Audio.sfx('click');
+    refreshHud();
+    renderHeroModal(heroId);
+    save();
+  }
+  function unequipSlot(heroId, slotKey) {
+    var h = hero(heroId);
+    var it = h.gear[slotKey];
+    if (!it) return;
+    h.gear[slotKey] = null;
+    state.inventory.push(it);
+    AOL.Audio.sfx('click');
+    renderHeroModal(heroId);
+    save();
+  }
+  function grantGear(item) {
+    state.inventory.push(item);
   }
 
   // ------------------------------------------------------------ build queue ---
@@ -589,7 +673,7 @@
   }
 
   function heroCard(h) {
-    var st = AOL.heroStats(h);
+    var st = fullStats(h);
     var r = AOL.RARITY[h.rarity];
     var inParty = state.party.indexOf(h.id) >= 0;
     var cls = AOL.CLASSES[h.cls];
@@ -865,10 +949,18 @@
     renderHeroModal(id);
     el.modal.classList.remove('hidden');
   }
+  function starsDisplay(n) {
+    return (
+      '★★★★★★'.slice(0, n) +
+      '<span class="star-empty">' +
+      '☆☆☆☆☆☆'.slice(0, AOL.STAR_MAX - n) +
+      '</span>'
+    );
+  }
   function renderHeroModal(id) {
     var h = hero(id);
     if (!h) return;
-    var st = AOL.heroStats(h);
+    var st = fullStats(h);
     var r = AOL.RARITY[h.rarity];
     var cls = AOL.CLASSES[h.cls];
     var fac = AOL.FACTIONS[AOL.heroFaction(h)];
@@ -889,7 +981,7 @@
       '<div class="hero-stars rarity-' +
       r.key +
       '">' +
-      AOL.stars(h.rarity) +
+      starsDisplay(h.stars) +
       ' <span class="muted">' +
       r.label +
       ' · ' +
@@ -922,6 +1014,11 @@
     html += skillRow('✨', 'Passive', skills.passive);
     html += skillRow('💥', 'Ultimate', skills.ult);
     html += '</div>';
+
+    if (h.owned) {
+      html += ascendBlock(h);
+      html += equipBlock(h);
+    }
 
     if (h.owned) {
       var cost = AOL.heroLevelCost(h);
@@ -976,7 +1073,161 @@
         recruit(id);
         renderHeroModal(id);
       };
+    var asc = document.getElementById('hmAscend');
+    if (asc)
+      asc.onclick = function () {
+        ascendHero(id);
+      };
+    el.modalCard.querySelectorAll('[data-slot]').forEach(function (node) {
+      node.onclick = function () {
+        openEquipPicker(id, node.getAttribute('data-slot'));
+      };
+    });
+    el.modalCard.querySelectorAll('[data-unequip]').forEach(function (node) {
+      node.onclick = function (e) {
+        e.stopPropagation();
+        unequipSlot(id, node.getAttribute('data-unequip'));
+      };
+    });
     document.getElementById('closeModal').onclick = closeModal;
+  }
+
+  // Ascension (stars via shards).
+  function ascendBlock(h) {
+    var maxed = h.stars >= AOL.STAR_MAX;
+    var cost = maxed ? 0 : AOL.ascendCost(h.stars, h.rarity);
+    var have = shardsOf(h.id);
+    var can = !maxed && have >= cost;
+    return (
+      '<div class="ascend-block">' +
+      '<div class="ascend-info"><div class="ascend-stars">' +
+      starsDisplay(h.stars) +
+      '</div>' +
+      '<div class="muted" style="font-size:0.72rem">' +
+      (maxed ? 'Max ascension' : 'Shards ' + have + ' / ' + cost + ' 🧩 · +8% HP & ATK per star') +
+      '</div></div>' +
+      '<button class="btn ' +
+      (can ? 'gold' : '') +
+      '" id="hmAscend" ' +
+      (can ? '' : 'disabled') +
+      '>' +
+      (maxed ? 'Max ★' : 'Ascend ★') +
+      '</button></div>'
+    );
+  }
+
+  // Equipment slots.
+  function equipBlock(h) {
+    var cells = AOL.GEAR_SLOTS.map(function (slot) {
+      var it = h.gear[slot.key];
+      if (it) {
+        var rr = AOL.RARITY[it.rarity];
+        return (
+          '<div class="equip-slot filled bg-' +
+          rr.key +
+          '" data-slot="' +
+          slot.key +
+          '" title="' +
+          it.name +
+          '">' +
+          '<span class="eq-ico">' +
+          slot.icon +
+          '</span>' +
+          '<span class="eq-val">+' +
+          AOL.gearStatValue(it) +
+          ' ' +
+          slot.stat.toUpperCase() +
+          '</span>' +
+          '<span class="eq-lv">Lv' +
+          it.level +
+          '</span>' +
+          '<span class="eq-remove" data-unequip="' +
+          slot.key +
+          '">✕</span>' +
+          '</div>'
+        );
+      }
+      return (
+        '<div class="equip-slot empty" data-slot="' +
+        slot.key +
+        '" title="' +
+        slot.name +
+        '">' +
+        '<span class="eq-ico dim">' +
+        slot.icon +
+        '</span><span class="eq-add">+</span></div>'
+      );
+    }).join('');
+    return (
+      '<div class="equip-head muted" style="font-size:0.76rem;margin:0.2rem 0 0.3rem">Equipment</div>' +
+      '<div class="equip-grid">' +
+      cells +
+      '</div>'
+    );
+  }
+
+  // Equip picker: choose an inventory item for a slot (or shows empty state).
+  function openEquipPicker(heroId, slotKey) {
+    var slot = AOL.GEAR_SLOT_BY_KEY[slotKey];
+    var items = state.inventory.filter(function (i) {
+      return i.slot === slotKey;
+    });
+    items.sort(function (a, b) {
+      return AOL.gearPower(b) - AOL.gearPower(a);
+    });
+    var html =
+      '<div class="modal-head"><div class="b-emoji">' +
+      slot.icon +
+      '</div><div><h3>Equip ' +
+      slot.name +
+      '</h3><div class="lvl">' +
+      items.length +
+      ' in inventory</div></div></div>';
+    if (!items.length) {
+      html +=
+        '<p class="muted" style="font-size:0.82rem">No ' +
+        slot.name.toLowerCase() +
+        ' in your inventory yet. Win battles to find gear.</p>';
+    } else {
+      html += '<div class="inv-list">';
+      html += items
+        .map(function (it) {
+          var rr = AOL.RARITY[it.rarity];
+          return (
+            '<button class="inv-item bg-' +
+            rr.key +
+            '" data-equip="' +
+            it.id +
+            '">' +
+            '<span class="eq-ico">' +
+            slot.icon +
+            '</span>' +
+            '<span class="inv-name">' +
+            it.name +
+            ' <span class="muted">Lv' +
+            it.level +
+            '</span></span>' +
+            '<span class="inv-stat">+' +
+            AOL.gearStatValue(it) +
+            ' ' +
+            slot.stat.toUpperCase() +
+            '</span></button>'
+          );
+        })
+        .join('');
+      html += '</div>';
+    }
+    html +=
+      '<div class="modal-actions"><button class="btn ghost" id="backHero">Back</button></div>';
+    el.modalCard.innerHTML = html;
+    el.modalCard.querySelectorAll('[data-equip]').forEach(function (node) {
+      node.onclick = function () {
+        equipItem(heroId, node.getAttribute('data-equip'));
+      };
+    });
+    document.getElementById('backHero').onclick = function () {
+      renderHeroModal(heroId);
+    };
   }
   function heroStatCell(label, val) {
     return '<div class="hero-stat"><span>' + label + '</span><b>' + val + '</b></div>';
@@ -1021,7 +1272,7 @@
     var syn = currentSynergy();
     var p = state.party.reduce(function (sum, id) {
       var h = hero(id);
-      var st = AOL.applyFormation(heroLine(id), AOL.heroStats(h));
+      var st = AOL.applyFormation(heroLine(id), fullStats(h));
       return sum + AOL.applySynergy(h, syn, st).power;
     }, 0);
     p += (state.buildings.barracks.level - 1) * AOL.BUILDINGS.barracks.armyPower * 5;
@@ -1285,7 +1536,7 @@
     var allies = state.party.map(function (id) {
       var h = hero(id);
       var line = heroLine(id);
-      var st = AOL.applySynergy(h, syn, AOL.applyFormation(line, AOL.heroStats(h)));
+      var st = AOL.applySynergy(h, syn, AOL.applyFormation(line, fullStats(h)));
       var bonus = 1 + (state.buildings.barracks.level - 1) * 0.05;
       return {
         name: h.name,
@@ -1329,9 +1580,17 @@
           state.resources.gold += reward.gold;
           state.gems += reward.gems;
           grantHeroXp(reward.heroXp);
+          var clearedStage = state.campaignStage;
           state.campaignStage++;
           bumpMission('win', 1);
-          toast('Victory! Stage ' + (state.campaignStage - 1) + ' cleared.', 'good');
+          toast('Victory! Stage ' + clearedStage + ' cleared.', 'good');
+          // Gear drop (65% chance).
+          var drng = new AOL.Rng((state.seed ^ Math.imul(clearedStage, 40503) ^ Date.now()) >>> 0);
+          if (drng.float() < 0.65) {
+            var item = AOL.makeGear(drng, clearedStage);
+            grantGear(item);
+            toast('Loot: ' + item.name + ' (' + AOL.GEAR_SLOT_BY_KEY[item.slot].icon + ')', 'gold');
+          }
           if (state.ftue && !state.ftue.firstWinDone) {
             state.ftue.firstWinDone = true;
             state.gems += 50;
@@ -1667,6 +1926,11 @@
       state.missions = { day: null, progress: {}, claimed: {}, ap: 0, chests: {} };
     if (!state.gacha) state.gacha = { sinceEpic: 0, sinceLeg: 0, total: 0 };
     if (!state.shards) state.shards = {};
+    if (!state.inventory) state.inventory = [];
+    state.heroes.forEach(function (h) {
+      if (h.stars == null) h.stars = AOL.baseStars(h.rarity);
+      if (!h.gear) h.gear = {};
+    });
     if (!state.jobs) {
       state.jobs = [];
       // Convert any in-flight legacy upgrade into an active job.

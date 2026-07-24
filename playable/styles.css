@@ -1139,6 +1139,121 @@ body {
   }
 }
 
+/* ---------- Progression: stars & equipment ---------- */
+.star-empty {
+  color: var(--edge-2);
+}
+.ascend-block {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid rgba(240, 196, 25, 0.3);
+  background: rgba(240, 196, 25, 0.06);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  margin: 0.6rem 0;
+}
+.ascend-info {
+  flex: 1;
+}
+.ascend-stars {
+  font-size: 1.1rem;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+.ascend-block .btn {
+  flex: 0 0 auto;
+}
+.equip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+.equip-slot {
+  position: relative;
+  border: 1px solid var(--edge-2);
+  border-radius: 10px;
+  min-height: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 3px;
+}
+.equip-slot.empty {
+  border-style: dashed;
+}
+.equip-slot .eq-ico {
+  font-size: 1.2rem;
+}
+.equip-slot .eq-ico.dim {
+  opacity: 0.4;
+}
+.equip-slot .eq-add {
+  color: var(--edge-2);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.equip-slot .eq-val {
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1;
+}
+.equip-slot .eq-lv {
+  font-size: 0.55rem;
+  color: var(--muted);
+}
+.equip-slot .eq-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #b03a3a;
+  color: #fff;
+  font-size: 0.6rem;
+  display: grid;
+  place-items: center;
+}
+.inv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-bottom: 0.6rem;
+}
+.inv-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--edge-2);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+.inv-item .eq-ico {
+  font-size: 1.3rem;
+}
+.inv-item .inv-name {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.inv-item .inv-stat {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 0.8rem;
+}
+
 /* ---------- FTUE (onboarding) ---------- */
 .ftue {
   position: fixed;
