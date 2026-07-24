@@ -48,9 +48,13 @@ See [docs/roadmap/Milestones.md](docs/roadmap/Milestones.md) for the detailed pl
 
 ## Play the Prototype (no install)
 
-A self-contained, no-build playable slice lives in [`playable/`](playable/). Open
-[`playable/index.html`](playable/index.html) directly in a modern browser — no Node.js, no server,
-no installation — to try the core loop: produce resources, upgrade the Town-Hall-gated kingdom,
+A self-contained, no-build playable slice lives in [`playable/`](playable/). For the quickest start,
+double-click **`JOGAR - Age of Legends.html`** (or **`JOGAR - Age of Legends.bat`**) in the project
+root — it opens the game in your default browser. You can also open
+[`playable/index.html`](playable/index.html) directly. No Node.js, no server, no installation is
+required.
+
+The prototype demonstrates the core loop: produce resources, upgrade the Town-Hall-gated kingdom,
 explore a procedurally generated world with fog of war, gather from nodes and clear PvE camps. See
 [playable/README.md](playable/README.md).
 
