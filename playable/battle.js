@@ -71,13 +71,19 @@ window.AOL = window.AOL || {};
   function buildContext(cfg) {
     var overlay = cfg.overlay;
     overlay.classList.remove('hidden');
+    var au = AOL.Audio;
     overlay.innerHTML =
       '<div class="bt-top">' +
       '<button class="bt-btn" id="btFlee">‹ Retreat</button>' +
       '<div class="bt-stage">Stage ' +
       cfg.stage +
       '</div>' +
+      '<div class="bt-top-right">' +
+      '<button class="bt-btn" id="btMute">' +
+      (au && au.isMuted() ? '🔇' : '🔊') +
+      '</button>' +
       '<button class="bt-btn" id="btSpeed">1×</button>' +
+      '</div>' +
       '</div>' +
       '<canvas class="bt-canvas" id="btCanvas"></canvas>' +
       '<div class="bt-result hidden" id="btResult"></div>';
@@ -116,13 +122,29 @@ window.AOL = window.AOL || {};
       );
 
     overlay.querySelector('#btFlee').onclick = function () {
+      if (au) au.sfx('click');
       finish(false, true);
     };
     var speedBtn = overlay.querySelector('#btSpeed');
     speedBtn.onclick = function () {
       ctxObj.speed = ctxObj.speed === 1 ? 2 : ctxObj.speed === 2 ? 3 : 1;
       speedBtn.textContent = ctxObj.speed + '×';
+      if (au) au.sfx('click');
     };
+    var muteBtn = overlay.querySelector('#btMute');
+    muteBtn.onclick = function () {
+      if (!au) return;
+      var m = au.toggleMute();
+      muteBtn.textContent = m ? '🔇' : '🔊';
+      if (!m) {
+        au.startMusic();
+        au.sfx('click');
+      }
+    };
+    if (au) {
+      au.resume();
+      au.startMusic();
+    }
 
     ctxObj.onResize = function () {
       resize(ctxObj);
@@ -177,6 +199,10 @@ window.AOL = window.AOL || {};
     if (!B) return;
     var w = B.w,
       h = B.h;
+    // Centre a bounded playfield so units never spread across a wide screen.
+    var fieldW = Math.min(w, 1000);
+    var ox = (w - fieldW) / 2;
+    B.field = { x: ox, w: fieldW };
     ['ally', 'enemy'].forEach(function (side) {
       var team = B.units.filter(function (u) {
         return u.side === side;
@@ -190,8 +216,8 @@ window.AOL = window.AOL || {};
       if (front.length === 0 && back.length) {
         front.push(back.shift());
       }
-      var frontX = side === 'ally' ? w * 0.36 : w * 0.64;
-      var backX = side === 'ally' ? w * 0.2 : w * 0.8;
+      var frontX = ox + fieldW * (side === 'ally' ? 0.36 : 0.64);
+      var backX = ox + fieldW * (side === 'ally' ? 0.18 : 0.82);
       placeColumn(front, frontX, h);
       placeColumn(back, backX, h);
     });
@@ -354,6 +380,7 @@ window.AOL = window.AOL || {};
       if (!a.done && p >= apex) {
         a.done = true;
         if (a.ability === 'ult-bash') {
+          if (AOL.Audio) AOL.Audio.sfx('ultimate');
           dealDamage(u, tgt, u.atk * 2.6, true);
           u.shieldT = 6;
           spawnSlash(tgt, 1.6, '#ffd36a');
@@ -399,6 +426,11 @@ window.AOL = window.AOL || {};
 
   function fireCast(u, ability, target) {
     var col = (u.side === 'ally' ? ROLE_COLORS : ENEMY_COLORS)[u.role];
+    if (AOL.Audio) {
+      if (ability.indexOf('ult') === 0) AOL.Audio.sfx('ultimate');
+      else if (ability === 'arrow') AOL.Audio.sfx('arrow');
+      else if (ability === 'spark' || ability === 'bolt') AOL.Audio.sfx('magic');
+    }
     switch (ability) {
       case 'arrow':
         spawnProjectile(u, target, 'arrow', col.prop, function (t) {
@@ -459,6 +491,7 @@ window.AOL = window.AOL || {};
         break;
       case 'ult-meteor':
         spawnMeteor(u, function () {
+          if (AOL.Audio) AOL.Audio.sfx('boom');
           foesOf(u).forEach(function (t) {
             dealDamage(u, t, u.atk * 1.5 * rand(0.9, 1.1), true);
           });
@@ -486,6 +519,7 @@ window.AOL = window.AOL || {};
     to.hp -= dmg;
     to.flash = 1;
     addEnergy(to, 8);
+    if (AOL.Audio) AOL.Audio.sfx(crit ? 'crit' : 'hit');
     spawnFloat(to, String(dmg), crit ? '#ff5a5a' : '#ffffff', crit ? 1.35 : 1);
     knock(to, from.face);
     if (to.hp <= 0) {
@@ -499,6 +533,7 @@ window.AOL = window.AOL || {};
     if (!to.alive) return;
     var h = Math.round(amount);
     to.hp = Math.min(to.maxHp, to.hp + h);
+    if (AOL.Audio) AOL.Audio.sfx('heal');
     spawnFloat(to, '+' + h, '#7be08f', 1);
     spawnSparkle(to);
   }
@@ -724,6 +759,12 @@ window.AOL = window.AOL || {};
     ctx.moveTo(w * 0.5, gy - 6);
     ctx.lineTo(w * 0.5, h);
     ctx.stroke();
+    // frame the playfield: darken outside the bounded arena on wide screens
+    if (B.field && B.field.w < w - 2) {
+      ctx.fillStyle = 'rgba(6,10,20,0.5)';
+      ctx.fillRect(0, 0, B.field.x, h);
+      ctx.fillRect(B.field.x + B.field.w, 0, w - (B.field.x + B.field.w), h);
+    }
   }
 
   function drawUnit(ctx, u) {
@@ -981,6 +1022,7 @@ window.AOL = window.AOL || {};
     if (B.over) return;
     B.over = true;
     timers = [];
+    if (AOL.Audio) AOL.Audio.stopMusic();
     var res = B.overlay.querySelector('#btResult');
     if (fled) {
       var fledEnd = B.cfg.onEnd;
@@ -988,6 +1030,7 @@ window.AOL = window.AOL || {};
       if (fledEnd) fledEnd({ win: false, fled: true });
       return;
     }
+    if (AOL.Audio) AOL.Audio.sfx(win ? 'victory' : 'defeat');
     var cfg = B.cfg;
     setTimeout2(0.35, function () {
       if (!B) return;
@@ -1004,6 +1047,7 @@ window.AOL = window.AOL || {};
         '<button class="bt-cta" id="btCont">Continue</button>';
       res.classList.remove('hidden');
       res.querySelector('#btCont').onclick = function () {
+        if (AOL.Audio) AOL.Audio.sfx('click');
         var onEnd = cfg.onEnd;
         close();
         if (onEnd) onEnd({ win: win });

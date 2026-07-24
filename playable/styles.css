@@ -569,6 +569,11 @@ body {
   font-weight: 800;
   letter-spacing: 0.02em;
 }
+.bt-top-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
 .bt-btn {
   background: var(--panel-2);
   color: var(--ink);
