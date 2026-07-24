@@ -1,0 +1,133 @@
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #1c2230;
+  --edge: #2b3242;
+  --ink: #e6e8eb;
+  --muted: #8b949e;
+  --accent: #d9a441;
+  --accent-2: #6ea8fe;
+  --good: #3fb950;
+  --bad: #f85149;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: radial-gradient(1200px 800px at 70% -10%, #17202e, var(--bg));
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* Top bar */
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(180deg, #1a2130, #12161d);
+  border-bottom: 1px solid var(--edge);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand .crest { font-size: 1.4rem; }
+.brand .title { font-weight: 700; letter-spacing: 0.02em; font-size: 1.1rem; }
+.brand .tag {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: #0d1117; background: var(--accent); padding: 0.1rem 0.4rem; border-radius: 999px;
+}
+.resources { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.res {
+  display: flex; align-items: center; gap: 0.3rem;
+  background: var(--panel-2); border: 1px solid var(--edge);
+  padding: 0.25rem 0.6rem; border-radius: 8px; font-variant-numeric: tabular-nums;
+  min-width: 84px;
+}
+.res .ico { font-size: 1rem; }
+.res.gold { color: var(--accent); }
+.clock { color: var(--muted); font-size: 0.9rem; display: flex; gap: 0.35rem; align-items: center; }
+
+/* Layout */
+#stage {
+  display: grid;
+  grid-template-columns: 320px 1fr 300px;
+  gap: 1rem;
+  padding: 1rem;
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  #stage { grid-template-columns: 1fr; }
+  #worldwrap { order: -1; }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.panel h2 { margin: 0 0 0.25rem; font-size: 1.05rem; }
+.panel h3 { margin: 1rem 0 0.35rem; font-size: 0.9rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.hint { color: var(--muted); font-size: 0.8rem; margin: 0 0 0.75rem; }
+
+/* Buildings */
+.building {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  background: var(--panel-2);
+}
+.building .b-ico { font-size: 1.3rem; }
+.building .b-name { font-weight: 600; font-size: 0.9rem; }
+.building .b-sub { color: var(--muted); font-size: 0.72rem; }
+.building button {
+  border: 1px solid var(--edge);
+  background: #232c3d; color: var(--ink);
+  border-radius: 8px; padding: 0.35rem 0.5rem; cursor: pointer; font-size: 0.72rem;
+  white-space: nowrap;
+}
+.building button:hover:not(:disabled) { border-color: var(--accent-2); }
+.building button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* World */
+#worldwrap { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+#world {
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: #0a0f16;
+  cursor: crosshair;
+  touch-action: none;
+}
+.world-hint { color: var(--muted); font-size: 0.78rem; }
+
+/* Party & log */
+#hero .stat { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.2rem 0; border-bottom: 1px dashed var(--edge); }
+#hero .stat b { color: var(--accent-2); }
+.log { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow-y: auto; font-size: 0.8rem; }
+.log li { padding: 0.25rem 0; border-bottom: 1px solid #1f2733; color: var(--muted); }
+.log li.good { color: var(--good); }
+.log li.bad { color: var(--bad); }
+.log li.big { color: var(--accent); font-weight: 600; }
+.controls { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.controls button {
+  flex: 1; border: 1px solid var(--edge); background: #232c3d; color: var(--ink);
+  border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 0.82rem;
+}
+.controls button:hover { border-color: var(--accent-2); }
+#newgame:hover { border-color: var(--bad); }

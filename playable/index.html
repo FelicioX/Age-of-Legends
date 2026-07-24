@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Age of Legends — Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header id="topbar">
+      <div class="brand">
+        <span class="crest">⚔️</span>
+        <span class="title">Age of Legends</span>
+        <span class="tag">Prototype</span>
+      </div>
+      <div id="resources" class="resources">
+        <div class="res" title="Wood"><span class="ico">🪵</span><span data-res="wood">0</span></div>
+        <div class="res" title="Stone"><span class="ico">🪨</span><span data-res="stone">0</span></div>
+        <div class="res" title="Iron"><span class="ico">⛏️</span><span data-res="iron">0</span></div>
+        <div class="res" title="Food"><span class="ico">🌾</span><span data-res="food">0</span></div>
+        <div class="res gold" title="Gold"><span class="ico">🪙</span><span data-res="gold">0</span></div>
+      </div>
+      <div class="clock"><span id="phase">☀️</span> <span id="day">Day 1</span></div>
+    </header>
+
+    <main id="stage">
+      <section id="kingdom" class="panel">
+        <h2>Kingdom</h2>
+        <p class="hint">Upgrade buildings to raise production. The Town Hall gates every other tier.</p>
+        <div id="buildings"></div>
+      </section>
+
+      <section id="worldwrap">
+        <canvas id="world" width="640" height="480" aria-label="World map"></canvas>
+        <div class="world-hint">Click the map to send your party. Reach nodes to gather, camps to fight.</div>
+      </section>
+
+      <section id="party" class="panel">
+        <h2>Party</h2>
+        <div id="hero"></div>
+        <h3>Chronicle</h3>
+        <ul id="log" class="log"></ul>
+        <div class="controls">
+          <button id="save">Save</button>
+          <button id="newgame">New Game</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>

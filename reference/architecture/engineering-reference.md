@@ -28,6 +28,28 @@ principles are referenced; no source content is reproduced.
 4. **Headless-first pays off.** Designing the simulation to run without a renderer or network makes
    it testable and future-proof.
 
+## Concrete Patterns Observed
+
+A close reading of the engineering reference project surfaced several concrete, reusable structures
+(described here as patterns; no source is reproduced):
+
+- **A single simulation package organized by domain.** Gameplay lives in one deterministic
+  simulation module subdivided by concern (combat, encounters, loot, professions, progression, pvp,
+  quests, social, content). Client rendering/input and backend services are separate. Age of Legends
+  mirrors this with `game/` (domain systems) on `engine/` (ECS), distinct from `client/` and
+  `server/`.
+- **The same core drives a headless environment.** A dedicated headless entry runs the simulation
+  without a renderer for automation and agent training, over a small protocol. This validates our
+  determinism-first, headless-capable core (see [../../docs/architecture/AI.md](../../docs/architecture/AI.md)).
+- **Client netcode as explicit, named policies.** Online/reconnect/snapshot concerns are isolated
+  modules with clear responsibilities. Age of Legends places these in `engine/networking`
+  (interpolation, reconciliation) behind the protocol in `shared/protocol`.
+- **Content as data.** Simulation content is data-driven, enabling tooling and rapid iteration —
+  the model our `tools/` and data-driven systems adopt.
+- **Consistent tooling and directory-local conventions.** Formatting/linting is uniform and each
+  area documents its own conventions. Age of Legends enforces this via root ESLint/Prettier and the
+  [coding standards](../../docs/standards/CodingStandards.md).
+
 ## How This Shapes Our Architecture
 
 These takeaways are realized in the architecture documents and ADRs:

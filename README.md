@@ -46,6 +46,14 @@ milestones defined in [ROADMAP.md](ROADMAP.md).
 
 See [docs/roadmap/Milestones.md](docs/roadmap/Milestones.md) for the detailed plan.
 
+## Play the Prototype (no install)
+
+A self-contained, no-build playable slice lives in [`playable/`](playable/). Open
+[`playable/index.html`](playable/index.html) directly in a modern browser — no Node.js, no server,
+no installation — to try the core loop: produce resources, upgrade the Town-Hall-gated kingdom,
+explore a procedurally generated world with fog of war, gather from nodes and clear PvE camps. See
+[playable/README.md](playable/README.md).
+
 ## Technology Stack
 
 | Layer            | Technology                          | Rationale (summary)                                    |

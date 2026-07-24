@@ -18,6 +18,33 @@ each. Only broad, widely used genre patterns are referenced; no protected conten
 | Social interaction      | Belonging and competition                      | Guilds, trade, world bosses ([guilds.md](guilds.md)) |
 | Long-term retention     | Sustained engagement                           | LiveOps and season design ([retention.md](retention.md)) |
 
+## Concrete Systems Observed
+
+A survey of the gameplay reference surfaced the following mechanic categories. Each is a widely used
+genre pattern; the table maps it to the **original** Age of Legends system that fulfils the same
+player value. No names, art, numbers or protected content are carried over.
+
+| Observed category (generic)              | Age of Legends original system                                   |
+| ---------------------------------------- | ---------------------------------------------------------------- |
+| Hero collection, star ranks, awakening   | Hero roster with levels + star ranks ([../../docs/gdd/Heroes.md](../../docs/gdd/Heroes.md)) |
+| Hero gear / equipment progression        | Crafted equipment, slots, quality/affixes ([../../docs/gdd/Crafting.md](../../docs/gdd/Crafting.md)) |
+| Central castle upgrade gating            | Town-hall-gated kingdom tiers ([../../docs/gdd/Buildings.md](../../docs/gdd/Buildings.md)) |
+| Buildings & research trees               | Buildings + technology trees ([../../docs/gdd/Technologies.md](../../docs/gdd/Technologies.md)) |
+| Troop recruitment / army                 | Barracks recruitment and party/troop capacity ([../../docs/gdd/Buildings.md](../../docs/gdd/Buildings.md)) |
+| Cosmetic skins (castle, troops)          | Cosmetic-only monetization ([../../docs/gdd/Monetization.md](../../docs/gdd/Monetization.md)) |
+| Large boss encounters                    | World bosses with contribution rewards ([../../docs/gdd/Bosses.md](../../docs/gdd/Bosses.md)) |
+| Campaign / tower PvE modes               | Dungeons, expeditions and elite challenges ([../../docs/gdd/PvE.md](../../docs/gdd/PvE.md)) |
+| Territorial warfare / server titles      | Territory control and leaderboards ([../../docs/gdd/PvP.md](../../docs/gdd/PvP.md), [../../docs/gdd/Guilds.md](../../docs/gdd/Guilds.md)) |
+| Alliance duels / cooperative guild play  | Guild events and cooperative content ([../../docs/gdd/Guilds.md](../../docs/gdd/Guilds.md)) |
+| Recurring event calendar (arms-race type)| Dynamic + seasonal event system ([../../docs/gdd/Events.md](../../docs/gdd/Events.md)) |
+| Season/kingdom-vs-kingdom cadence        | LiveOps seasons and cross-shard events ([../../docs/gdd/LiveOps.md](../../docs/gdd/LiveOps.md)) |
+| Premium currency + F2P economy           | Ethical, non-pay-to-win economy ([../../docs/gdd/Economy.md](../../docs/gdd/Economy.md)) |
+
+**Key retention insight:** the strongest driver observed is a **dense LiveOps cadence** — a weekly
+event calendar layered over long seasonal campaigns and recurring cooperative/competitive events.
+Age of Legends adopts this cadence philosophy with entirely original content
+([retention.md](retention.md)).
+
 ## Guiding Interpretation
 
 The team keeps the **feel** these patterns produce — steady progress, ownership, discovery and

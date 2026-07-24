@@ -20,6 +20,11 @@ All notable changes to Age of Legends are documented here. The format is based o
   tests.
 - Buildable skeletons for the `engine`, `game`, `server` and `client` packages.
 - Continuous integration workflows and contribution templates.
+- Self-contained, no-build playable prototype under `playable/` demonstrating the core loop
+  (resource production, Town-Hall-gated kingdom upgrades, procedural world with fog of war,
+  gathering and PvE camp battles) with a deterministic seeded RNG and fixed-timestep loop.
+- Reference study notes enriched with concrete observations from the engineering and gameplay
+  references, each mapped to an original Age of Legends system.
 
 ## [0.1.0] — Foundation
 
