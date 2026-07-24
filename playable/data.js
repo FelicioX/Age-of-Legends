@@ -548,6 +548,14 @@ window.AOL = window.AOL || {};
   AOL.upgradeSeconds = function (nextLevel) {
     return Math.round(4 + nextLevel * 3); // short for a demo
   };
+  // Concurrent build slots (builders). Grows as the Castle rises.
+  AOL.builderCount = function (castleLevel) {
+    var n = 2;
+    if (castleLevel >= 6) n++;
+    if (castleLevel >= 12) n++;
+    return n; // 2..4
+  };
+  AOL.BUILD_QUEUE_MAX = 6;
 
   // --- Campaign enemies ----------------------------------------------------
   AOL.ENEMY_KINDS = [

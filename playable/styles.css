@@ -166,6 +166,76 @@ body {
   text-shadow: 0 1px 3px #000;
 }
 
+/* Build-queue strip over the kingdom */
+.build-queue {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(8, 12, 22, 0.72);
+  border: 1px solid var(--edge);
+  backdrop-filter: blur(4px);
+  z-index: 3;
+}
+.build-queue.hidden {
+  display: none;
+}
+.build-queue .q-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--gold);
+  padding-right: 2px;
+}
+.q-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 9px;
+  border: 1px solid var(--edge-2);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+.q-chip.active {
+  border-color: rgba(255, 180, 80, 0.5);
+}
+.q-chip.wait {
+  opacity: 0.72;
+}
+.q-chip .q-emoji {
+  font-size: 0.95rem;
+}
+.q-chip .q-lv {
+  font-weight: 700;
+}
+.q-chip .q-bar {
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+.q-chip .q-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ffcf5c, #ff9a3c);
+}
+.q-chip .q-time {
+  color: var(--muted);
+  min-width: 26px;
+  text-align: right;
+}
+.stat-row.queued span {
+  color: #9fb4ff;
+}
+
 .view-head {
   padding: 1rem 1rem 0.25rem;
 }

@@ -38,6 +38,7 @@
       }),
       party: [],
       formation: {},
+      jobs: [],
       campaignStage: 1,
       clock: 0,
       day: 1,
@@ -109,6 +110,73 @@
     });
   }
 
+  // ------------------------------------------------------------ build queue ---
+  // A limited number of builders process upgrade jobs. Extra requests wait in
+  // the queue. The active job of each building keeps its upgradeEndsAt so the
+  // kingdom renderer can still draw the progress ring.
+  function builders() {
+    return AOL.builderCount(state.buildings.castle.level);
+  }
+  function jobsFor(type) {
+    return state.jobs.filter(function (j) {
+      return j.type === type;
+    });
+  }
+  function activeJobFor(type) {
+    return state.jobs.find(function (j) {
+      return j.type === type && j.active;
+    });
+  }
+  function nextLevelFor(type) {
+    return state.buildings[type].level + jobsFor(type).length + 1;
+  }
+  function reconcileJobs() {
+    var now = Date.now();
+    var active = state.jobs.filter(function (j) {
+      return j.active;
+    }).length;
+    for (var i = 0; i < state.jobs.length && active < builders(); i++) {
+      var j = state.jobs[i];
+      if (j.active) continue;
+      // Only one active job per building at a time (levels are sequential).
+      if (activeJobFor(j.type)) continue;
+      j.active = true;
+      j.endsAt = now + j.totalMs;
+      var b = state.buildings[j.type];
+      b.upgradeEndsAt = j.endsAt;
+      b.upgradeTotalMs = j.totalMs;
+      active++;
+    }
+  }
+  function enqueueUpgrade(type) {
+    if (state.jobs.length >= AOL.BUILD_QUEUE_MAX) {
+      toast('Build queue is full.', 'bad');
+      return false;
+    }
+    var nextLevel = nextLevelFor(type);
+    if (nextLevel > AOL.buildingMaxTier(state, type)) {
+      toast('Raise the Castle to unlock the next tier.', 'bad');
+      return false;
+    }
+    var cost = AOL.upgradeCost(type, nextLevel);
+    if (!affordable(cost)) {
+      toast('Not enough resources.', 'bad');
+      return false;
+    }
+    spend(cost);
+    state.jobs.push({
+      type: type,
+      toLevel: nextLevel,
+      totalMs: AOL.upgradeSeconds(nextLevel) * 1000,
+      active: false,
+      endsAt: 0,
+    });
+    reconcileJobs();
+    var waiting = !activeJobFor(type) || activeJobFor(type).toLevel !== nextLevel;
+    toast(waiting ? 'Queued (waiting for a builder).' : 'Construction started.', '');
+    return true;
+  }
+
   // ----------------------------------------------------------- simulation ---
   function step(dt) {
     // Production.
@@ -125,18 +193,24 @@
     }
     // Building completion.
     var now = Date.now();
-    AOL.LAYOUT.forEach(function (item) {
-      var b = state.buildings[item.type];
-      if (b.upgradeEndsAt && now >= b.upgradeEndsAt) {
-        b.level++;
+    var done = state.jobs.filter(function (j) {
+      return j.active && now >= j.endsAt;
+    });
+    if (done.length) {
+      done.forEach(function (j) {
+        var b = state.buildings[j.type];
+        b.level = j.toLevel;
         b.upgradeEndsAt = 0;
         b.upgradeTotalMs = 0;
-        toast(AOL.BUILDINGS[item.type].name + ' upgraded to Lv ' + b.level + '!', 'gold');
-        if (item.type === 'castle') toast('New building tiers unlocked!', 'good');
-        if (openBuilding === item.type) renderModal(item.type);
-        refreshHud();
-      }
-    });
+        state.jobs.splice(state.jobs.indexOf(j), 1);
+        toast(AOL.BUILDINGS[j.type].name + ' upgraded to Lv ' + b.level + '!', 'gold');
+        if (j.type === 'castle') toast('New building tiers unlocked!', 'good');
+      });
+      reconcileJobs();
+      if (openBuilding) renderModal(openBuilding);
+      renderQueue();
+      refreshHud();
+    }
     // Day / night clock.
     state.clock += dt;
     if (state.clock >= 120) {
@@ -174,6 +248,7 @@
       'kingdomLevel',
       'heroGrid',
       'campaignBody',
+      'buildQueue',
       'toasts',
       'modal',
       'modalCard',
@@ -210,6 +285,58 @@
     el.kingdomLevel.textContent = state.buildings.castle.level;
   }
 
+  // Build-queue strip over the kingdom view.
+  function renderQueue() {
+    if (!el.buildQueue) return;
+    if (!state.jobs || !state.jobs.length) {
+      el.buildQueue.classList.add('hidden');
+      el.buildQueue.innerHTML = '';
+      return;
+    }
+    el.buildQueue.classList.remove('hidden');
+    var now = Date.now();
+    var chips = state.jobs
+      .map(function (j) {
+        var def = AOL.BUILDINGS[j.type];
+        if (j.active) {
+          var remain = Math.max(0, Math.ceil((j.endsAt - now) / 1000));
+          var prog = Math.max(0, Math.min(1, 1 - (j.endsAt - now) / j.totalMs));
+          return (
+            '<div class="q-chip active" data-q="' +
+            j.type +
+            '"><span class="q-emoji">' +
+            def.emoji +
+            '</span><span class="q-lv">Lv ' +
+            j.toLevel +
+            '</span>' +
+            '<span class="q-bar"><span style="width:' +
+            Math.round(prog * 100) +
+            '%"></span></span>' +
+            '<span class="q-time">' +
+            remain +
+            's</span></div>'
+          );
+        }
+        return (
+          '<div class="q-chip wait" data-q="' +
+          j.type +
+          '"><span class="q-emoji">' +
+          def.emoji +
+          '</span><span class="q-lv">Lv ' +
+          j.toLevel +
+          '</span><span class="q-wait">⏳</span></div>'
+        );
+      })
+      .join('');
+    el.buildQueue.innerHTML =
+      '<div class="q-label">🔨 ' + activeCount() + '/' + builders() + '</div>' + chips;
+    el.buildQueue.querySelectorAll('[data-q]').forEach(function (node) {
+      node.onclick = function () {
+        openModal(node.getAttribute('data-q'));
+      };
+    });
+  }
+
   // -------------------------------------------------------- building modal ---
   var openBuilding = null;
   var openHero = null;
@@ -228,10 +355,15 @@
     var b = state.buildings[type];
     var def = AOL.BUILDINGS[type];
     var now = Date.now();
-    var building = b.upgradeEndsAt && b.upgradeEndsAt > now;
-    var atCap = b.level >= AOL.buildingMaxTier(state, type);
-    var cost = AOL.upgradeCost(type, b.level + 1);
-    var secs = AOL.upgradeSeconds(b.level + 1);
+    var active = activeJobFor(type);
+    var pending = jobsFor(type).filter(function (j) {
+      return !j.active;
+    });
+    var nextLevel = nextLevelFor(type);
+    var atCap = nextLevel > AOL.buildingMaxTier(state, type);
+    var queueFull = state.jobs.length >= AOL.BUILD_QUEUE_MAX;
+    var cost = AOL.upgradeCost(type, nextLevel);
+    var secs = AOL.upgradeSeconds(nextLevel);
 
     var html =
       '<div class="modal-head"><div class="b-emoji">' +
@@ -255,21 +387,45 @@
     }
     if (def.armyPower) html += statRow('Army power', '+' + def.armyPower * b.level);
 
-    if (building) {
-      var remain = Math.ceil((b.upgradeEndsAt - now) / 1000);
-      html += '<div class="stat-row"><span>Upgrading…</span><b>' + remain + 's left</b></div>';
+    // Active build for this building.
+    if (active) {
+      var remain = Math.ceil((active.endsAt - now) / 1000);
       html +=
-        '<div class="modal-actions">' +
+        '<div class="stat-row"><span>Upgrading to Lv ' +
+        active.toLevel +
+        '…</span><b>' +
+        remain +
+        's left</b></div>';
+    }
+    // Pending (queued, waiting for a builder) upgrades for this building.
+    pending.forEach(function (j) {
+      html +=
+        '<div class="stat-row queued"><span>⏳ Queued → Lv ' +
+        j.toLevel +
+        '</span><b>waiting</b></div>';
+    });
+    html +=
+      '<div class="stat-row"><span>Builders</span><b>' +
+      state.jobs.filter(function (j) {
+        return j.active;
+      }).length +
+      ' / ' +
+      builders() +
+      ' busy</b></div>';
+
+    var actions = '';
+    if (active) {
+      actions +=
         '<button class="btn gold" id="rushBtn">⚡ Speed up (' +
-        rushCost(remain) +
-        ' 💎)</button>' +
-        '<button class="btn ghost" id="closeModal">Close</button></div>';
-    } else if (atCap) {
+        rushCost(Math.ceil((active.endsAt - now) / 1000)) +
+        ' 💎)</button>';
+    }
+    if (atCap) {
       var why =
-        type === 'castle' ? 'Maximum level reached.' : 'Raise the Castle to unlock the next tier.';
+        type === 'castle' ? 'Max level reached.' : 'Raise the Castle to unlock the next tier.';
       html += '<div class="stat-row"><span>' + why + '</span><b>Lv ' + b.level + '</b></div>';
-      html +=
-        '<div class="modal-actions"><button class="btn ghost" id="closeModal">Close</button></div>';
+    } else if (queueFull) {
+      html += '<div class="stat-row"><span>Build queue is full.</span><b></b></div>';
     } else {
       html +=
         '<div class="cost-line">' +
@@ -290,15 +446,17 @@
         '</div>';
       html += '<div class="stat-row"><span>Build time</span><b>' + secs + 's</b></div>';
       var can = affordable(cost);
-      html +=
-        '<div class="modal-actions">' +
+      var willQueue = jobsFor(type).length > 0 || activeCount() >= builders();
+      actions +=
         '<button class="btn green" id="upgradeBtn" ' +
         (can ? '' : 'disabled') +
-        '>Upgrade to Lv ' +
-        (b.level + 1) +
-        '</button>' +
-        '<button class="btn ghost" id="closeModal">Close</button></div>';
+        '>' +
+        (willQueue ? '➕ Queue Lv ' : 'Upgrade to Lv ') +
+        nextLevel +
+        '</button>';
     }
+    actions += '<button class="btn ghost" id="closeModal">Close</button>';
+    html += '<div class="modal-actions">' + actions + '</div>';
     el.modalCard.innerHTML = html;
 
     var up = document.getElementById('upgradeBtn');
@@ -313,6 +471,11 @@
       };
     document.getElementById('closeModal').onclick = closeModal;
   }
+  function activeCount() {
+    return state.jobs.filter(function (j) {
+      return j.active;
+    }).length;
+  }
 
   function statRow(label, val) {
     return '<div class="stat-row"><span>' + label + '</span><b>' + val + '</b></div>';
@@ -322,30 +485,25 @@
   }
 
   function doUpgrade(type) {
-    var b = state.buildings[type];
-    if (b.level >= AOL.buildingMaxTier(state, type)) return;
-    var cost = AOL.upgradeCost(type, b.level + 1);
-    if (!affordable(cost)) {
-      toast('Not enough resources.', 'bad');
-      return;
+    if (enqueueUpgrade(type)) {
+      AOL.Audio.sfx('click');
+      refreshHud();
+      renderQueue();
+      renderModal(type);
     }
-    spend(cost);
-    var ms = AOL.upgradeSeconds(b.level + 1) * 1000;
-    b.upgradeEndsAt = Date.now() + ms;
-    b.upgradeTotalMs = ms;
-    toast('Construction started.', '');
-    refreshHud();
-    renderModal(type);
   }
   function doRush(type) {
     var b = state.buildings[type];
-    var remain = Math.ceil((b.upgradeEndsAt - Date.now()) / 1000);
+    var job = activeJobFor(type);
+    if (!job) return;
+    var remain = Math.ceil((job.endsAt - Date.now()) / 1000);
     var cost = rushCost(remain);
     if (state.gems < cost) {
       toast('Not enough gems.', 'bad');
       return;
     }
     state.gems -= cost;
+    job.endsAt = Date.now();
     b.upgradeEndsAt = Date.now();
     toast('Construction rushed!', 'gold');
     refreshHud();
@@ -910,12 +1068,34 @@
     }, 2200);
   }
 
+  // Bring an older save up to the current schema (adds fields introduced later).
+  function migrate() {
+    if (!state.formation) state.formation = {};
+    if (!state.jobs) {
+      state.jobs = [];
+      // Convert any in-flight legacy upgrade into an active job.
+      AOL.LAYOUT.forEach(function (item) {
+        var b = state.buildings[item.type];
+        if (b && b.upgradeEndsAt && b.upgradeEndsAt > Date.now()) {
+          state.jobs.push({
+            type: item.type,
+            toLevel: b.level + 1,
+            totalMs: b.upgradeTotalMs || AOL.upgradeSeconds(b.level + 1) * 1000,
+            active: true,
+            endsAt: b.upgradeEndsAt,
+          });
+        }
+      });
+    }
+  }
+
   // ------------------------------------------------------------------ boot ---
   function boot() {
     cacheEl();
     var saved = load();
     if (saved) {
       state = saved;
+      migrate();
       applyOffline();
       toast('Realm restored.', '');
     } else {
@@ -962,6 +1142,7 @@
     });
 
     refreshHud();
+    renderQueue();
 
     // Autosave.
     setInterval(save, 20000);
@@ -980,7 +1161,10 @@
         acc -= STEP;
         steps++;
       }
-      if (currentView === 'kingdom') AOL.Kingdom.render(dt * 1000);
+      if (currentView === 'kingdom') {
+        AOL.Kingdom.render(dt * 1000);
+        if (state.jobs.length) renderQueue();
+      }
       hud += dt;
       if (hud >= 0.5) {
         hud = 0;
