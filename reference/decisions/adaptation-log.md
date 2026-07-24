@@ -17,6 +17,7 @@ system is the project's own.
 | 9 | Living-world events (gameplay)     | Dynamic + seasonal event system                          | [../../docs/gdd/Events.md](../../docs/gdd/Events.md) |
 |10 | Social interdependence (gameplay)  | Guilds, trade, contribution-based world bosses           | [../../docs/gdd/Guilds.md](../../docs/gdd/Guilds.md), [../../docs/gdd/Bosses.md](../../docs/gdd/Bosses.md) |
 |11 | Long-term retention (gameplay)     | Ethical LiveOps: goals, seasons, no pay-to-win           | [../../docs/gdd/LiveOps.md](../../docs/gdd/LiveOps.md), [../../docs/gdd/Monetization.md](../../docs/gdd/Monetization.md) |
+|12 | Live-service ops plumbing (teardown)| Telemetry pipeline, versioned content delivery, ethical IAP, localization-first | [gameplay/technical-teardown.md](../gameplay/technical-teardown.md) |
 
 ## Compliance Statement
 

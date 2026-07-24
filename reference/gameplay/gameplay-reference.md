@@ -40,6 +40,9 @@ player value. No names, art, numbers or protected content are carried over.
 | Season/kingdom-vs-kingdom cadence        | LiveOps seasons and cross-shard events ([../../docs/gdd/LiveOps.md](../../docs/gdd/LiveOps.md)) |
 | Premium currency + F2P economy           | Ethical, non-pay-to-win economy ([../../docs/gdd/Economy.md](../../docs/gdd/Economy.md)) |
 
+> A black-box **technical teardown** of a shipping build of the reference (package metadata and
+> structure only, no protected content) is recorded in [technical-teardown.md](technical-teardown.md).
+
 **Key retention insight:** the strongest driver observed is a **dense LiveOps cadence** — a weekly
 event calendar layered over long seasonal campaigns and recurring cooperative/competitive events.
 Age of Legends adopts this cadence philosophy with entirely original content
