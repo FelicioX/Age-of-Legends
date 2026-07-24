@@ -75,6 +75,9 @@
       },
       guild: { coins: 0, contribution: 0, tech: {}, lastDonate: null },
       achievements: { claimed: {} },
+      shop: { lastGift: null },
+      season: { points: 0, premium: false, claimedFree: {}, claimedPrem: {} },
+      events: { claimed: {} },
       clock: 0,
       day: 1,
       lastTs: Date.now(),
@@ -453,6 +456,7 @@
       'dailyBody',
       'arenaBody',
       'guildBody',
+      'shopBody',
       'buildQueue',
       'ftue',
       'toasts',
@@ -1683,6 +1687,7 @@
           var clearedStage = state.campaignStage;
           state.campaignStage++;
           bumpMission('win', 1);
+          addSeasonPoints(15);
           toast('Victory! Stage ' + clearedStage + ' cleared.', 'good');
           // Gear drop (65% chance).
           var drng = new AOL.Rng((state.seed ^ Math.imul(clearedStage, 40503) ^ Date.now()) >>> 0);
@@ -1851,6 +1856,7 @@
           toast('Arena loss. −' + delta + ' rating.', 'bad');
         }
         grantReward(reward);
+        addSeasonPoints(result.win ? 10 : 4);
         a.ladderSeed = (a.ladderSeed * 1664525 + 1013904223) >>> 0; // reshuffle
         refreshHud();
         renderArena();
@@ -2152,6 +2158,245 @@
     });
   }
 
+  // ------------------------------------------------ shop / season / events ---
+  var shopTab = 'shop';
+  function addSeasonPoints(n) {
+    if (!state.season) return;
+    state.season.points += n;
+    if (currentView === 'shop' && shopTab === 'season') renderShop();
+  }
+  function claimDailyGift() {
+    var today = AOL.dayKey();
+    if (state.shop.lastGift === today) {
+      toast('Daily gift already claimed.', 'bad');
+      return;
+    }
+    state.shop.lastGift = today;
+    grantReward(AOL.SHOP_DAILY_GIFT);
+    AOL.Audio.sfx('victory');
+    toast('Daily gift: ' + rewardText(AOL.SHOP_DAILY_GIFT), 'gold');
+    refreshHud();
+    renderShop();
+    save();
+  }
+  function buyBundle(id) {
+    var b = AOL.SHOP_BUNDLES.find(function (x) {
+      return x.id === id;
+    });
+    if (!b) return;
+    if (state.gems < b.gems) {
+      toast('Not enough gems.', 'bad');
+      return;
+    }
+    state.gems -= b.gems;
+    grantReward(b.reward);
+    AOL.Audio.sfx('click');
+    toast('Bought ' + b.name + ': ' + rewardText(b.reward), 'gold');
+    refreshHud();
+    renderShop();
+    save();
+  }
+  function unlockPremium() {
+    if (state.season.premium) return;
+    if (state.gems < AOL.SEASON_PREMIUM_COST) {
+      toast('Need ' + AOL.SEASON_PREMIUM_COST + ' gems for the premium pass.', 'bad');
+      return;
+    }
+    state.gems -= AOL.SEASON_PREMIUM_COST;
+    state.season.premium = true;
+    AOL.Audio.sfx('ultimate');
+    toast('Premium season pass unlocked!', 'gold');
+    refreshHud();
+    renderShop();
+    save();
+  }
+  function claimSeason(tierIdx, track) {
+    var reached = AOL.seasonTier(state.season.points);
+    if (tierIdx >= reached) return;
+    if (track === 'prem' && !state.season.premium) {
+      toast('Unlock the premium pass first.', 'bad');
+      return;
+    }
+    var claimedMap = track === 'prem' ? state.season.claimedPrem : state.season.claimedFree;
+    if (claimedMap[tierIdx]) return;
+    var tier = AOL.SEASON_TIERS[tierIdx];
+    claimedMap[tierIdx] = true;
+    grantReward(track === 'prem' ? tier.prem : tier.free);
+    AOL.Audio.sfx('victory');
+    toast('Season reward claimed!', 'gold');
+    refreshHud();
+    renderShop();
+    save();
+  }
+  function claimEventGift() {
+    var ev = AOL.activeEvent();
+    var key = AOL.dayKey() + ':' + ev.id;
+    if (state.events.claimed[key]) {
+      toast('Event gift already claimed today.', 'bad');
+      return;
+    }
+    state.events.claimed[key] = true;
+    grantReward(ev.gift);
+    AOL.Audio.sfx('victory');
+    toast(ev.name + ' gift: ' + rewardText(ev.gift), 'gold');
+    refreshHud();
+    renderShop();
+    save();
+  }
+  function renderShop() {
+    if (!el.shopBody) return;
+    var html =
+      '<div class="tabs">' +
+      '<button class="tab' +
+      (shopTab === 'shop' ? ' on' : '') +
+      '" data-stab="shop">Shop</button>' +
+      '<button class="tab' +
+      (shopTab === 'season' ? ' on' : '') +
+      '" data-stab="season">Season</button>' +
+      '<button class="tab' +
+      (shopTab === 'events' ? ' on' : '') +
+      '" data-stab="events">Events</button></div>';
+
+    if (shopTab === 'shop') {
+      var giftReady = state.shop.lastGift !== AOL.dayKey();
+      html +=
+        '<div class="shop-gift"><div><div class="tech-name">🎁 Daily gift</div>' +
+        '<div class="muted" style="font-size:0.74rem">' +
+        rewardText(AOL.SHOP_DAILY_GIFT) +
+        '</div></div>' +
+        '<button class="btn ' +
+        (giftReady ? 'green' : '') +
+        '" id="dailyGift" ' +
+        (giftReady ? '' : 'disabled') +
+        '>' +
+        (giftReady ? 'Claim' : 'Claimed') +
+        '</button></div>';
+      html += '<div class="view-sub">Value bundles</div><div class="tech-list">';
+      AOL.SHOP_BUNDLES.forEach(function (b) {
+        html +=
+          '<div class="tech-row"><div class="tech-info"><div class="tech-name">' +
+          b.icon +
+          ' ' +
+          b.name +
+          '</div><div class="muted" style="font-size:0.72rem">' +
+          rewardText(b.reward) +
+          '</div></div>' +
+          '<button class="btn ' +
+          (state.gems >= b.gems ? 'gold' : '') +
+          '" data-bundle="' +
+          b.id +
+          '">💎' +
+          b.gems +
+          '</button></div>';
+      });
+      html += '</div>';
+    } else if (shopTab === 'season') {
+      var s = state.season;
+      var reached = AOL.seasonTier(s.points);
+      var into = s.points % AOL.SEASON_POINTS_PER_TIER;
+      html +=
+        '<div class="season-head"><div><div class="tech-name">🎟️ Season of Ironvale</div>' +
+        '<div class="muted" style="font-size:0.74rem">Tier ' +
+        reached +
+        '/' +
+        AOL.SEASON_TIERS.length +
+        ' · ' +
+        s.points +
+        ' pts</div></div>' +
+        (s.premium
+          ? '<span class="prem-badge">PREMIUM</span>'
+          : '<button class="btn gold" id="unlockPrem">Unlock 💎' +
+            AOL.SEASON_PREMIUM_COST +
+            '</button>') +
+        '</div>';
+      html +=
+        '<div class="mission-bar" style="margin:0.4rem 0"><span style="width:' +
+        Math.round((into / AOL.SEASON_POINTS_PER_TIER) * 100) +
+        '%"></span></div>';
+      html += '<div class="season-track">';
+      AOL.SEASON_TIERS.forEach(function (t, i) {
+        var unlocked = i < reached;
+        var freeClaimed = s.claimedFree[i];
+        var premClaimed = s.claimedPrem[i];
+        html +=
+          '<div class="season-tier' +
+          (unlocked ? ' unlocked' : '') +
+          '"><div class="st-no">' +
+          (i + 1) +
+          '</div>' +
+          '<button class="st-reward free' +
+          (freeClaimed ? ' claimed' : unlocked ? ' ready' : '') +
+          '" data-season="' +
+          i +
+          ':free" ' +
+          (unlocked && !freeClaimed ? '' : 'disabled') +
+          '>' +
+          (freeClaimed ? '✓' : rewardText(t.free)) +
+          '</button>' +
+          '<button class="st-reward prem' +
+          (premClaimed ? ' claimed' : unlocked && s.premium ? ' ready' : '') +
+          '" data-season="' +
+          i +
+          ':prem" ' +
+          (unlocked && s.premium && !premClaimed ? '' : 'disabled') +
+          '>' +
+          (premClaimed ? '✓' : (s.premium ? '' : '🔒 ') + rewardText(t.prem)) +
+          '</button></div>';
+      });
+      html += '</div>';
+      html +=
+        '<div class="muted" style="font-size:0.72rem;text-align:center;margin-top:0.4rem">Earn season points from battles, arena and missions.</div>';
+    } else {
+      var ev = AOL.activeEvent();
+      var claimed = state.events.claimed[AOL.dayKey() + ':' + ev.id];
+      html +=
+        '<div class="event-card"><div class="event-ico">' +
+        ev.icon +
+        '</div><div class="event-info"><div class="tech-name">' +
+        ev.name +
+        ' <span class="live-tag">LIVE</span></div><div class="muted" style="font-size:0.78rem">' +
+        ev.desc +
+        '</div><div class="muted" style="font-size:0.72rem;margin-top:2px">Daily gift: ' +
+        rewardText(ev.gift) +
+        '</div></div></div>';
+      html +=
+        '<button class="btn ' +
+        (claimed ? '' : 'green') +
+        '" id="eventGift" ' +
+        (claimed ? 'disabled' : '') +
+        ' style="width:100%;margin-top:0.5rem">' +
+        (claimed ? 'Gift claimed today' : 'Claim event gift') +
+        '</button>';
+      html +=
+        '<div class="muted" style="font-size:0.72rem;text-align:center;margin-top:0.6rem">Events rotate every couple of days. Check back for new ones.</div>';
+    }
+
+    el.shopBody.innerHTML = html;
+    el.shopBody.querySelectorAll('[data-stab]').forEach(function (b) {
+      b.onclick = function () {
+        shopTab = b.getAttribute('data-stab');
+        renderShop();
+      };
+    });
+    var dg = document.getElementById('dailyGift');
+    if (dg) dg.onclick = claimDailyGift;
+    var up = document.getElementById('unlockPrem');
+    if (up) up.onclick = unlockPremium;
+    var eg = document.getElementById('eventGift');
+    if (eg) eg.onclick = claimEventGift;
+    el.shopBody.querySelectorAll('[data-bundle]').forEach(function (b) {
+      b.onclick = function () {
+        buyBundle(b.getAttribute('data-bundle'));
+      };
+    });
+    el.shopBody.querySelectorAll('[data-season]').forEach(function (b) {
+      b.onclick = function () {
+        var parts = b.getAttribute('data-season').split(':');
+        claimSeason(parseInt(parts[0], 10), parts[1]);
+      };
+    });
+  }
+
   // ----------------------------------------------------------- dailies ---
   // Reset missions when the calendar day rolls over. Login availability is
   // derived from login.claimedDay vs today.
@@ -2205,6 +2450,7 @@
     state.missions.claimed[id] = true;
     state.missions.ap = Math.min(AOL.ACTIVITY_MAX, state.missions.ap + m.ap);
     grantReward(m.reward);
+    addSeasonPoints(5);
     AOL.Audio.sfx('click');
     toast('Mission complete: ' + rewardText(m.reward), 'gold');
     refreshHud();
@@ -2365,6 +2611,7 @@
     if (v === 'daily') renderDaily();
     if (v === 'arena') renderArena();
     if (v === 'guild') renderGuild();
+    if (v === 'shop') renderShop();
     if (v === 'kingdom') AOL.Kingdom.resize();
   }
 
@@ -2475,6 +2722,10 @@
       };
     if (!state.guild) state.guild = { coins: 0, contribution: 0, tech: {}, lastDonate: null };
     if (!state.achievements) state.achievements = { claimed: {} };
+    if (!state.shop) state.shop = { lastGift: null };
+    if (!state.season)
+      state.season = { points: 0, premium: false, claimedFree: {}, claimedPrem: {} };
+    if (!state.events) state.events = { claimed: {} };
     state.heroes.forEach(function (h) {
       if (h.stars == null) h.stars = AOL.baseStars(h.rarity);
       if (!h.gear) h.gear = {};

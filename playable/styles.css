@@ -1524,6 +1524,93 @@ body {
   font-size: 0.86rem;
 }
 
+/* ---------- Shop / season / events ---------- */
+.shop-gift,
+.season-head,
+.event-card {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--edge-2);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  background: linear-gradient(120deg, #22305a, #17203a);
+  margin-bottom: 0.5rem;
+}
+.shop-gift > div:first-child,
+.season-head > div:first-child,
+.event-info {
+  flex: 1;
+}
+.prem-badge {
+  background: linear-gradient(90deg, #ffcf5c, #ff9a3c);
+  color: #241a05;
+  font-weight: 800;
+  font-size: 0.7rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+}
+.season-track {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.season-tier {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr;
+  gap: 0.4rem;
+  align-items: stretch;
+  opacity: 0.55;
+}
+.season-tier.unlocked {
+  opacity: 1;
+}
+.season-tier .st-no {
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: var(--muted);
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+}
+.st-reward {
+  border-radius: 8px;
+  border: 1px solid var(--edge);
+  padding: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  min-height: 34px;
+}
+.st-reward.free.ready {
+  border-color: #5fd06a;
+  color: #8fe89a;
+}
+.st-reward.prem {
+  background: rgba(240, 196, 25, 0.05);
+}
+.st-reward.prem.ready {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.st-reward.claimed {
+  opacity: 0.5;
+}
+.event-card .event-ico {
+  font-size: 2.2rem;
+}
+.live-tag {
+  background: #b03a3a;
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+
 /* ---------- FTUE (onboarding) ---------- */
 .ftue {
   position: fixed;

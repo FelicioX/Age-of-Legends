@@ -830,6 +830,87 @@ window.AOL = window.AOL || {};
   ];
   AOL.ACTIVITY_MAX = 100;
 
+  // --- Shop ----------------------------------------------------------------
+  // A free daily gift plus gem-priced value bundles. No real-money purchases —
+  // the "premium" currency (gems) is fully earnable in-game.
+  AOL.SHOP_DAILY_GIFT = { gold: 500, food: 300 };
+  AOL.SHOP_BUNDLES = [
+    {
+      id: 'b_builder',
+      name: "Builder's Pack",
+      icon: '🧱',
+      gems: 120,
+      reward: { wood: 4000, stone: 4000, iron: 2000 },
+    },
+    { id: 'b_war', name: 'War Chest', icon: '⚔️', gems: 200, reward: { gold: 8000, heroXp: 1200 } },
+    {
+      id: 'b_granary',
+      name: 'Granary Stock',
+      icon: '🌾',
+      gems: 90,
+      reward: { food: 6000, gold: 2000 },
+    },
+  ];
+
+  // --- Season pass ---------------------------------------------------------
+  AOL.SEASON_POINTS_PER_TIER = 100;
+  AOL.SEASON_PREMIUM_COST = 500; // gems to unlock the premium track (simulated)
+  AOL.SEASON_TIERS = [
+    { free: { gold: 500 }, prem: { gems: 30 } },
+    { free: { heroXp: 200 }, prem: { gems: 30 } },
+    { free: { food: 800 }, prem: { gold: 3000 } },
+    { free: { gems: 20 }, prem: { gems: 40 } },
+    { free: { wood: 1500 }, prem: { heroXp: 600 } },
+    { free: { gold: 1500 }, prem: { gems: 50 } },
+    { free: { heroXp: 400 }, prem: { gems: 60 } },
+    { free: { gems: 30 }, prem: { gold: 6000 } },
+    { free: { iron: 1500 }, prem: { gems: 80 } },
+    { free: { gems: 50 }, prem: { gems: 120, heroXp: 1000 } },
+  ];
+  AOL.seasonTier = function (points) {
+    return Math.min(AOL.SEASON_TIERS.length, Math.floor(points / AOL.SEASON_POINTS_PER_TIER));
+  };
+
+  // --- LiveOps events (rotating) ------------------------------------------
+  // A deterministic rotation keyed by day-of-year so the "live" event changes.
+  AOL.EVENTS = [
+    {
+      id: 'e_drops',
+      name: 'Bounty Weekend',
+      icon: '🎁',
+      desc: 'Campaign gear drops are more common.',
+      gift: { gems: 20 },
+    },
+    {
+      id: 'e_gold',
+      name: 'Gold Rush',
+      icon: '🪙',
+      desc: 'A surge of gold flows through Ironvale.',
+      gift: { gold: 3000 },
+    },
+    {
+      id: 'e_arena',
+      name: 'Arena Fervor',
+      icon: '🏆',
+      desc: 'Glory season — prove yourself in the arena.',
+      gift: { gems: 25 },
+    },
+    {
+      id: 'e_summon',
+      name: 'Fate Festival',
+      icon: '🔮',
+      desc: 'The stars align for summoners.',
+      gift: { heroXp: 800 },
+    },
+  ];
+  AOL.activeEvent = function (ts) {
+    var d = new Date(ts == null ? Date.now() : ts);
+    var start = new Date(d.getFullYear(), 0, 0);
+    var doy = Math.floor((d - start) / 86400000);
+    var idx = Math.floor(doy / 2) % AOL.EVENTS.length; // rotates every 2 days
+    return AOL.EVENTS[idx];
+  };
+
   // --- Guild (local / simulated) ------------------------------------------
   AOL.GUILD_NAME = 'Ironvale Vanguard';
   AOL.GUILD_MEMBERS = [
