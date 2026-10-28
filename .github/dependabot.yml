@@ -5,6 +5,16 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    ignore:
+      # typescript-eslint only supports typescript <6.1.0, so a bump to TS 7
+      # breaks `pnpm lint`. Drop this once it declares support for TS >=7.
+      # https://github.com/typescript-eslint/typescript-eslint/issues/10940
+      - dependency-name: typescript
+        versions: ['>=7.0.0']
+      # @types/node tracks the Node runtime pinned in .nvmrc and ci.yml (22),
+      # so major bumps have to follow that upgrade, not precede it.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       dev-dependencies:
         dependency-type: development
