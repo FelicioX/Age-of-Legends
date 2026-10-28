@@ -15,6 +15,7 @@ accepted; a decision is changed by adding a new ADR that supersedes the old one.
 | 0007 | PostgreSQL and Redis for persistence           | Accepted | 2026-07-24 |
 | 0008 | Mobile packaging via Capacitor (Play Store)    | Accepted | 2026-07-24 |
 | 0009 | Live-service platform (telemetry, IAP, config) | Accepted | 2026-07-24 |
+| 0010 | TypeScript held at 6.x until lint supports 7   | Accepted | 2026-10-28 |
 
 See the [ADR directory](docs/adr/) for the full records and the
 [template](docs/adr/0000-template.md) for new decisions.

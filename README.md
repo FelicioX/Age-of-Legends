@@ -37,14 +37,19 @@ tests, and future content tooling.
 
 ## Project Status
 
-🚧 **Foundation Phase (Milestone 0)**
+✅ **Foundation complete** — 🚧 **Simulation Core (Milestone 1) next**
 
-The repository currently establishes the engineering foundation: the monorepo, the shared
-domain core, the documentation set (Game Design Document, architecture, standards and decision
-records) and the development tooling. Gameplay systems are introduced incrementally in the
-milestones defined in [ROADMAP.md](ROADMAP.md).
+The engineering foundation is in place: the monorepo, the shared domain core, the documentation
+set (Game Design Document, architecture, standards and decision records), the development tooling
+and continuous integration. Gameplay systems are introduced incrementally in the milestones
+defined in [ROADMAP.md](ROADMAP.md).
 
-See [docs/roadmap/Milestones.md](docs/roadmap/Milestones.md) for the detailed plan.
+A separate **prototype track** under [`playable/`](playable/) validates game design ahead of the
+typed packages — a complete client-side loop through phase 4, described below. It proves design,
+not architecture; the milestones remain the delivery plan.
+
+See [docs/roadmap/Milestones.md](docs/roadmap/Milestones.md) for the detailed plan and
+[TASKS.md](TASKS.md) for current status.
 
 ## Play the Prototype (no install)
 
@@ -54,8 +59,13 @@ root — it opens the game in your default browser. You can also open
 [`playable/index.html`](playable/index.html) directly. No Node.js, no server, no installation is
 required.
 
-The prototype demonstrates the core loop: produce resources, upgrade the Town-Hall-gated kingdom,
-explore a procedurally generated world with fog of war, gather from nodes and clear PvE camps. See
+The prototype is a complete client-side game loop. Beyond the kingdom and exploration core, it
+covers a hero roster with factions and synergy, formation, a build queue, a campaign chapter with
+idle rewards, a scripted onboarding, daily login and missions, summon with published odds and
+pity, star ascension and equipment, multi-slot saves, asynchronous arena PvP, a guild with
+research techs, achievements, a shop, a season pass and rotating events — rendered through a
+drawn battle scene with synthesized audio and procedural portraits. Online play, monetization and
+art are simulated locally: there is no backend and no imported asset. See
 [playable/README.md](playable/README.md).
 
 ## Technology Stack
@@ -78,6 +88,11 @@ explore a procedurally generated world with fog of war, gather from nodes and cl
 Full justification: [docs/architecture/Overview.md](docs/architecture/Overview.md) and
 [docs/adr/0002-technology-stack.md](docs/adr/0002-technology-stack.md).
 
+> **Version ceilings.** TypeScript is held at the 6.x line because `typescript-eslint` does not yet
+> support TypeScript 7, and `@types/node` is held at 22.x to match the pinned Node runtime. Both are
+> enforced by `ignore` rules in `.github/dependabot.yml` and explained, with the conditions for
+> lifting them, in [ADR-0010](docs/adr/0010-typescript-version-ceiling.md).
+
 ## Repository Layout
 
 ```
@@ -87,6 +102,7 @@ Age-of-Legends/
 ├── game/            # Domain systems and content definitions (rules of the world)
 ├── server/          # Authoritative server: gateway, API, world simulation, persistence
 ├── client/          # React + PixiJS player client
+├── playable/        # No-build browser prototype used to validate game design
 ├── docs/            # Vision, GDD, architecture, roadmap, standards, ADRs
 ├── reference/       # Study notes on engineering and gameplay references
 ├── database/        # Schema, migrations and seeds
@@ -127,14 +143,15 @@ pnpm run test
 
 ### Common Tasks
 
-| Command              | Description                             |
-| -------------------- | --------------------------------------- |
-| `pnpm run dev`       | Run all packages in watch mode          |
-| `pnpm run build`     | Build every workspace package           |
-| `pnpm run test`      | Run the full test suite                 |
-| `pnpm run lint`      | Lint the codebase                       |
-| `pnpm run typecheck` | Type-check every package                |
-| `pnpm run check`     | Format check + lint + typecheck + tests |
+| Command                   | Description                                       |
+| ------------------------- | ------------------------------------------------- |
+| `pnpm run dev`            | Run all packages in watch mode                    |
+| `pnpm run build`          | Build every workspace package                     |
+| `pnpm run test`           | Run the full test suite                           |
+| `pnpm run lint`           | Lint the codebase                                 |
+| `pnpm run typecheck`      | Type-check every package                          |
+| `pnpm run check`          | Format check + lint + typecheck + tests           |
+| `pnpm run smoke:playable` | Headless smoke test for the `playable/` prototype |
 
 A `Makefile` mirrors these commands for convenience (`make help`).
 

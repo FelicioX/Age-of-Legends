@@ -12,7 +12,7 @@ exploration, strategic combat and large-scale multiplayer.
 | Perspective  | Top-down 2D                                                     |
 | Monetization | Ethical, non-pay-to-win (cosmetics, convenience, season passes) |
 | Server model | Authoritative, sharded, horizontally scalable                   |
-| Status       | Foundation phase (Milestone 0)                                  |
+| Status       | Foundation complete; prototype track through phase 4            |
 
 ## Core Pillars
 
