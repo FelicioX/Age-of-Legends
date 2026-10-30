@@ -17,9 +17,9 @@
     "@aol/shared": "workspace:*",
     "@aol/engine": "workspace:*",
     "@aol/game": "workspace:*",
-    "pixi.js": "^8.20.1",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "pixi.js": "^8.22.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
